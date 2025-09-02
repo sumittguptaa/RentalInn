@@ -3,4 +3,8 @@ plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'RentalInn'
 include ':app'
+include ':@react-native-async-storage_async-storage'
+include ':react-native-reanimated'
+include ':react-native-gesture-handler'
+include ':react-native-vector-icons'
 includeBuild('../node_modules/@react-native/gradle-plugin')
