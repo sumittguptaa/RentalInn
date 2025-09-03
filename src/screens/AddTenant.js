@@ -1,9 +1,8 @@
-import React, {useContext, useState} from 'react';
+import React, { useContext, useState } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,21 +14,22 @@ import {
   ActivityIndicator,
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {ThemeContext} from '../context/ThemeContext';
+import { ThemeContext } from '../context/ThemeContext';
 import Gap from '../components/Gap/Gap';
 import StandardText from '../components/StandardText/StandardText';
 import StandardCard from '../components/StandardCard/StandardCard';
-import {addTenant} from '../services/NetworkUtils';
-import {CredentialsContext} from '../context/CredentialsContext';
+import { addTenant } from '../services/NetworkUtils';
+import { CredentialsContext } from '../context/CredentialsContext';
 import colors from '../theme/color';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {TouchableOpacity} from 'react-native';
+import { TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const AddTenant = ({navigation}) => {
-  const {theme: mode} = useContext(ThemeContext);
+const AddTenant = ({ navigation }) => {
+  const { theme: mode } = useContext(ThemeContext);
   const theme = useTheme();
-  const {credentials} = useContext(CredentialsContext);
+  const { credentials } = useContext(CredentialsContext);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [formErrors, setFormErrors] = useState({});
@@ -63,7 +63,7 @@ const AddTenant = ({navigation}) => {
         [datePicker.field]: formatDate(selectedDate),
       });
     }
-    setDatePicker({...datePicker, show: false});
+    setDatePicker({ ...datePicker, show: false });
   };
 
   const [tenant, setTenant] = useState({
@@ -117,7 +117,7 @@ const AddTenant = ({navigation}) => {
   };
 
   const handleChange = (key, value) => {
-    setTenant({...tenant, [key]: value});
+    setTenant({ ...tenant, [key]: value });
   };
 
   const handleSubmit = async () => {
@@ -145,11 +145,12 @@ const AddTenant = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.background}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={{padding: 16}}>
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
           <Gap size="md" />
           <StandardCard>
             <View style={styles.cardContent}>
@@ -159,7 +160,7 @@ const AddTenant = ({navigation}) => {
                 color="#888"
               />
 
-              <View style={{flex: 1, marginLeft: 16}}>
+              <View style={{ flex: 1, marginLeft: 16 }}>
                 <StandardText fontWeight="bold" size="xl">
                   Add New Tenant
                 </StandardText>
@@ -288,18 +289,20 @@ const AddTenant = ({navigation}) => {
             <Text style={styles.errorText}>{formErrors.agreementPeriod}</Text>
           )}
 
-          <Text style={{marginBottom: 8, marginLeft: 2}}>Tenant Type *</Text>
+          <Text style={{ marginBottom: 8, marginLeft: 2 }}>Tenant Type *</Text>
           <View
             style={{
               marginBottom: 12,
               borderWidth: 1,
               borderColor: '#ccc',
               borderRadius: 4,
-            }}>
+            }}
+          >
             <Picker
               selectedValue={tenant.tenantType}
               onValueChange={value => handleChange('tenantType', value)}
-              style={{height: 50, width: '100%'}}>
+              style={{ height: 50, width: '100%' }}
+            >
               <Picker.Item label="Select type" value="" />
               <Picker.Item label="Family" value="family" />
               <Picker.Item label="Bachelors" value="bachelors" />
@@ -339,13 +342,14 @@ const AddTenant = ({navigation}) => {
             <ActivityIndicator
               animating={true}
               size="large"
-              style={{marginVertical: 16}}
+              style={{ marginVertical: 16 }}
             />
           ) : (
             <Button
               mode="contained"
               onPress={handleSubmit}
-              style={{borderRadius: 5}}>
+              style={{ borderRadius: 5 }}
+            >
               <StandardText fontWeight="bold" color="default_white">
                 Save Tenant
               </StandardText>

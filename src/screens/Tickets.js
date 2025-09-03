@@ -1,15 +1,14 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
 } from 'react-native';
-import {Button, FAB, Chip} from 'react-native-paper';
-import {TextInput as PaperInput} from 'react-native-paper';
-import {ThemeContext} from '../context/ThemeContext';
+import { Button, FAB, Chip } from 'react-native-paper';
+import { TextInput as PaperInput } from 'react-native-paper';
+import { ThemeContext } from '../context/ThemeContext';
 import StandardText from '../components/StandardText/StandardText';
 import StandardCard from '../components/StandardCard/StandardCard';
 import Gap from '../components/Gap/Gap';
@@ -18,12 +17,13 @@ import {
   getDocument,
   updateTicket,
 } from '../services/NetworkUtils';
-import {CredentialsContext} from '../context/CredentialsContext';
+import { CredentialsContext } from '../context/CredentialsContext';
 import colors from '../theme/color';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const Tickets = ({navigation}) => {
-  const {theme: mode} = useContext(ThemeContext);
-  const {credentials} = useContext(CredentialsContext);
+const Tickets = ({ navigation }) => {
+  const { theme: mode } = useContext(ThemeContext);
+  const { credentials } = useContext(CredentialsContext);
 
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('ALL');
@@ -33,9 +33,9 @@ const Tickets = ({navigation}) => {
   const [ticketImages, setTicketImages] = useState({}); // { ticketId: [urls] }
 
   const [filterOptions, setFilterOptions] = useState([
-    {label: 'All', key: 'ALL', value: 0},
-    {label: 'Active', key: 'ACTIVE', value: 0},
-    {label: 'Closed', key: 'CLOSED', value: 0},
+    { label: 'All', key: 'ALL', value: 0 },
+    { label: 'Active', key: 'ACTIVE', value: 0 },
+    { label: 'Closed', key: 'CLOSED', value: 0 },
   ]);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -62,9 +62,9 @@ const Tickets = ({navigation}) => {
       const closedCount = items.filter(t => t.status === 'CLOSED').length;
 
       setFilterOptions([
-        {label: 'All', key: 'ALL', value: allCount},
-        {label: 'Active', key: 'ACTIVE', value: activeCount},
-        {label: 'Closed', key: 'CLOSED', value: closedCount},
+        { label: 'All', key: 'ALL', value: allCount },
+        { label: 'Active', key: 'ACTIVE', value: activeCount },
+        { label: 'Closed', key: 'CLOSED', value: closedCount },
       ]);
 
       // Fetch image URLs for tickets
@@ -93,9 +93,9 @@ const Tickets = ({navigation}) => {
       setAllTickets([]);
       setTickets([]);
       setFilterOptions([
-        {label: 'All', key: 'ALL', value: 0},
-        {label: 'Active', key: 'ACTIVE', value: 0},
-        {label: 'Closed', key: 'CLOSED', value: 0},
+        { label: 'All', key: 'ALL', value: 0 },
+        { label: 'Active', key: 'ACTIVE', value: 0 },
+        { label: 'Closed', key: 'CLOSED', value: 0 },
       ]);
     } finally {
       setLoading(false);
@@ -170,13 +170,14 @@ const Tickets = ({navigation}) => {
                 onPress={() => {
                   setModalVisible(false);
                   setSelectedImageUrl(null);
-                }}>
-                <StandardText style={{color: '#fff'}}>Close</StandardText>
+                }}
+              >
+                <StandardText style={{ color: '#fff' }}>Close</StandardText>
               </TouchableOpacity>
               {selectedImageUrl && (
                 <View style={styles.modalImageWrapper}>
                   <Image
-                    source={{uri: selectedImageUrl}}
+                    source={{ uri: selectedImageUrl }}
                     style={styles.modalRectImage}
                   />
                 </View>
@@ -184,7 +185,7 @@ const Tickets = ({navigation}) => {
             </View>
           </View>
         )}
-        <ScrollView contentContainerStyle={{padding: 16}}>
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
           {/* Search Bar */}
           <PaperInput
             mode="flat"
@@ -195,7 +196,7 @@ const Tickets = ({navigation}) => {
             left={<PaperInput.Icon icon="magnify" />}
             underlineColor="transparent"
             activeUnderlineColor="transparent"
-            contentStyle={{fontFamily: 'Metropolis-Medium'}}
+            contentStyle={{ fontFamily: 'Metropolis-Medium' }}
             theme={{
               roundness: 25,
               colors: {
@@ -213,7 +214,8 @@ const Tickets = ({navigation}) => {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.filterContainer}>
+            style={styles.filterContainer}
+          >
             {filterOptions.map(option => (
               <Chip
                 key={option.key}
@@ -228,7 +230,8 @@ const Tickets = ({navigation}) => {
                 textStyle={{
                   color: selectedFilter === option.key ? '#fff' : '#000',
                   fontFamily: 'Metropolis-Medium',
-                }}>
+                }}
+              >
                 {option.label} ({option.value})
               </Chip>
             ))}
@@ -237,7 +240,12 @@ const Tickets = ({navigation}) => {
           {/* Loading Indicator or Ticket List */}
           {loading ? (
             <View
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <StandardText>Loading tickets...</StandardText>
             </View>
           ) : (
@@ -261,11 +269,13 @@ const Tickets = ({navigation}) => {
                               ? '#4caf50'
                               : '#9e9e9e',
                         },
-                      ]}>
+                      ]}
+                    >
                       <StandardText
                         fontWeight="semibold"
                         size="sm"
-                        style={{color: '#fff'}}>
+                        style={{ color: '#fff' }}
+                      >
                         {ticket.status}
                       </StandardText>
                     </View>
@@ -276,7 +286,8 @@ const Tickets = ({navigation}) => {
                     <StandardText
                       size="sm"
                       fontWeight="semibold"
-                      color="default_gray">
+                      color="default_gray"
+                    >
                       👤 {ticket.raisedBy}
                     </StandardText>
                     <StandardText size="sm" color="default_gray">
@@ -288,7 +299,8 @@ const Tickets = ({navigation}) => {
                   <StandardText
                     size="xs"
                     color="default_gray"
-                    style={styles.timeText}>
+                    style={styles.timeText}
+                  >
                     {new Date(ticket.createdAt).toLocaleString()}
                   </StandardText>
 
@@ -298,18 +310,20 @@ const Tickets = ({navigation}) => {
                       <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        style={styles.imageScroll}>
+                        style={styles.imageScroll}
+                      >
                         {ticketImages[ticket.id].map((imgUrl, idx) => (
                           <TouchableOpacity
                             key={idx}
-                            style={{marginRight: 8}}
+                            style={{ marginRight: 8 }}
                             onPress={() => {
                               setSelectedImageUrl(imgUrl);
                               setModalVisible(true);
-                            }}>
+                            }}
+                          >
                             <Image
                               key={idx}
-                              source={{uri: imgUrl}}
+                              source={{ uri: imgUrl }}
                               style={styles.image}
                             />
                           </TouchableOpacity>
@@ -318,7 +332,7 @@ const Tickets = ({navigation}) => {
                     )}
 
                   {/* Issue + Description */}
-                  <View style={{marginTop: 6}}>
+                  <View style={{ marginTop: 6 }}>
                     <StandardText fontWeight="semibold" style={styles.issue}>
                       {ticket.issue}
                     </StandardText>
@@ -327,7 +341,8 @@ const Tickets = ({navigation}) => {
                         size="sm"
                         color="default_gray"
                         numberOfLines={3}
-                        style={styles.description}>
+                        style={styles.description}
+                      >
                         {ticket.description}
                       </StandardText>
                     ) : null}
@@ -339,8 +354,9 @@ const Tickets = ({navigation}) => {
                       <Button
                         mode="contained"
                         style={styles.actionButton}
-                        onPress={() => handleCloseTicket(ticket.id)}>
-                        <StandardText style={{color: '#fff'}}>
+                        onPress={() => handleCloseTicket(ticket.id)}
+                      >
+                        <StandardText style={{ color: '#fff' }}>
                           Close Ticket
                         </StandardText>
                       </Button>
@@ -482,7 +498,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOpacity: 0.08,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
     elevation: 3,
   },
@@ -546,7 +562,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     elevation: 2,
   },
-  chip: {marginRight: 10, borderRadius: 20, elevation: 1},
+  chip: { marginRight: 10, borderRadius: 20, elevation: 1 },
 });
 
 export default Tickets;

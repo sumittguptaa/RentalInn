@@ -1,29 +1,24 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-} from 'react-native';
-import {Avatar, FAB, Menu, Chip} from 'react-native-paper';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Avatar, FAB, Menu, Chip } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {TextInput as PaperInput} from 'react-native-paper';
-import {ThemeContext} from '../context/ThemeContext';
+import { TextInput as PaperInput } from 'react-native-paper';
+import { ThemeContext } from '../context/ThemeContext';
 import StandardText from '../components/StandardText/StandardText';
 import StandardCard from '../components/StandardCard/StandardCard';
 import Gap from '../components/Gap/Gap';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   fetchTenants,
   putTenantOnNotice,
   deleteTenant,
 } from '../services/NetworkUtils';
-import {CredentialsContext} from '../context/CredentialsContext';
+import { CredentialsContext } from '../context/CredentialsContext';
 import colors from '../theme/color';
 
-const Tenants = ({navigation}) => {
-  const {credentials} = useContext(CredentialsContext);
-  const {theme: mode} = useContext(ThemeContext);
+const Tenants = ({ navigation }) => {
+  const { credentials } = useContext(CredentialsContext);
+  const { theme: mode } = useContext(ThemeContext);
 
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -33,10 +28,10 @@ const Tenants = ({navigation}) => {
   const [anchorBedId, setAnchorBedId] = useState(null);
   const [tenants, setTenants] = useState([]);
   const [filterOptions, setFilterOptions] = useState([
-    {label: 'All', key: 'all', value: 0},
-    {label: 'Dues', key: 'dues', value: 0},
-    {label: 'No Dues', key: 'no_dues', value: 0},
-    {label: 'Notice', key: 'notice', value: 0},
+    { label: 'All', key: 'all', value: 0 },
+    { label: 'Dues', key: 'dues', value: 0 },
+    { label: 'No Dues', key: 'no_dues', value: 0 },
+    { label: 'Notice', key: 'notice', value: 0 },
   ]);
 
   const fetchData = useCallback(async () => {
@@ -55,10 +50,10 @@ const Tenants = ({navigation}) => {
       const noticeCount = tenantsList.filter(t => t.is_on_notice).length;
 
       setFilterOptions([
-        {label: 'All', key: 'all', value: allCount},
-        {label: 'Dues', key: 'dues', value: duesCount},
-        {label: 'No Dues', key: 'no_dues', value: noDuesCount},
-        {label: 'Notice', key: 'notice', value: noticeCount},
+        { label: 'All', key: 'all', value: allCount },
+        { label: 'Dues', key: 'dues', value: duesCount },
+        { label: 'No Dues', key: 'no_dues', value: noDuesCount },
+        { label: 'Notice', key: 'notice', value: noticeCount },
       ]);
     } catch (error) {
       console.error('Error fetching tenants:', error);
@@ -92,21 +87,21 @@ const Tenants = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{flex: 1}}>
-        <View style={{flex: 1}}>
+      <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
           {/* Main content */}
-          <ScrollView contentContainerStyle={{padding: 16}}>
+          <ScrollView contentContainerStyle={{ padding: 16 }}>
             {/* Search */}
             <PaperInput
               mode="flat"
               placeholder="Search Tenants..."
               value={search}
               onChangeText={setSearch}
-              style={[styles.searchBar, {fontFamily: 'Metropolis-Medium'}]}
+              style={[styles.searchBar, { fontFamily: 'Metropolis-Medium' }]}
               left={<PaperInput.Icon icon="magnify" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              contentStyle={{fontFamily: 'Metropolis-Medium'}}
+              contentStyle={{ fontFamily: 'Metropolis-Medium' }}
               theme={{
                 roundness: 25,
                 colors: {
@@ -123,7 +118,8 @@ const Tenants = ({navigation}) => {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              style={{marginBottom: 16}}>
+              style={{ marginBottom: 16 }}
+            >
               {filterOptions.map(option => (
                 <Chip
                   key={option.key}
@@ -138,7 +134,8 @@ const Tenants = ({navigation}) => {
                   textStyle={{
                     color: selectedFilter === option.key ? '#fff' : '#000',
                     fontFamily: 'Metropolis-Medium',
-                  }}>
+                  }}
+                >
                   {option.label} ({option.value})
                 </Chip>
               ))}
@@ -146,7 +143,7 @@ const Tenants = ({navigation}) => {
 
             {/* Loader */}
             {loading && (
-              <View style={{padding: 20, alignItems: 'center'}}>
+              <View style={{ padding: 20, alignItems: 'center' }}>
                 <StandardText>Loading tenants...</StandardText>
               </View>
             )}
@@ -156,8 +153,9 @@ const Tenants = ({navigation}) => {
               <StandardCard key={tenant.id} style={styles.card}>
                 <TouchableOpacity
                   onPress={() =>
-                    navigation.navigate('TenantDetails', {tenant})
-                  }>
+                    navigation.navigate('TenantDetails', { tenant })
+                  }
+                >
                   <View style={styles.row}>
                     {/* Avatar */}
                     <Avatar.Image
@@ -165,11 +163,11 @@ const Tenants = ({navigation}) => {
                       source={{
                         uri: 'https://avatar.iran.liara.run/public/37',
                       }}
-                      style={{marginRight: 14}}
+                      style={{ marginRight: 14 }}
                     />
 
                     {/* Info Section */}
-                    <View style={{flex: 1}}>
+                    <View style={{ flex: 1 }}>
                       <View style={styles.rowBetween}>
                         <StandardText fontWeight="bold" size="lg">
                           {tenant.name}
@@ -187,14 +185,16 @@ const Tenants = ({navigation}) => {
                               onPress={() => {
                                 setMenuVisible(true);
                                 setAnchorBedId(tenant.id);
-                              }}>
+                              }}
+                            >
                               <MaterialCommunityIcons
                                 name="dots-vertical"
                                 size={22}
                                 color="#444"
                               />
                             </TouchableOpacity>
-                          }>
+                          }
+                        >
                           <Menu.Item onPress={() => {}} title="Edit" />
                           <Menu.Item onPress={() => {}} title="Share" />
                           <Menu.Item
@@ -202,7 +202,7 @@ const Tenants = ({navigation}) => {
                               putTenantOnNotice(
                                 credentials.accessToken,
                                 tenant.id,
-                                {notice: true},
+                                { notice: true },
                               );
                             }}
                             title="Put on Notice"
@@ -221,25 +221,27 @@ const Tenants = ({navigation}) => {
                       </View>
 
                       {/* Quick badges */}
-                      <View style={{flexDirection: 'row', marginTop: 6}}>
+                      <View style={{ flexDirection: 'row', marginTop: 6 }}>
                         {tenant.has_dues && (
                           <Chip
                             style={styles.badgeDues}
-                            textStyle={{color: '#fff'}}>
+                            textStyle={{ color: '#fff' }}
+                          >
                             Dues
                           </Chip>
                         )}
                         {tenant.is_on_notice && (
                           <Chip
                             style={styles.badgeNotice}
-                            textStyle={{color: '#fff'}}>
+                            textStyle={{ color: '#fff' }}
+                          >
                             Notice
                           </Chip>
                         )}
                       </View>
 
                       {/* Small details */}
-                      <View style={{marginTop: 8}}>
+                      <View style={{ marginTop: 8 }}>
                         <View style={styles.detailRow}>
                           <MaterialCommunityIcons
                             name="bed"
@@ -296,7 +298,7 @@ const Tenants = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {flex: 1, backgroundColor: colors.background, marginTop: 25},
+  safeArea: { flex: 1, backgroundColor: colors.background, marginTop: 25 },
   searchBar: {
     marginBottom: 10,
     backgroundColor: '#fff',
@@ -304,26 +306,26 @@ const styles = StyleSheet.create({
     elevation: 2,
     fontFamily: 'Metropolis-Medium',
   },
-  chip: {marginRight: 10, borderRadius: 20, elevation: 1},
+  chip: { marginRight: 10, borderRadius: 20, elevation: 1 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 3},
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
   },
-  row: {flexDirection: 'row', alignItems: 'center'},
+  row: { flexDirection: 'row', alignItems: 'center' },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  detailRow: {flexDirection: 'row', alignItems: 'center', marginBottom: 4},
-  detailText: {marginLeft: 6, color: '#444'},
+  detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  detailText: { marginLeft: 6, color: '#444' },
   badgeDues: {
     backgroundColor: '#e53935',
     marginRight: 6,

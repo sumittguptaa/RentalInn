@@ -1,62 +1,63 @@
-import React, {useContext, useState} from 'react';
+import React, { useContext, useState } from 'react';
 import {
   View,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Image,
   Dimensions,
 } from 'react-native';
-import {Button, Chip, Menu} from 'react-native-paper';
+import { Button, Chip, Menu } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {ThemeContext} from '../context/ThemeContext';
+import { ThemeContext } from '../context/ThemeContext';
 import StandardText from '../components/StandardText/StandardText';
 import StandardCard from '../components/StandardCard/StandardCard';
 import Gap from '../components/Gap/Gap';
 import StandardInformationAccordion from '../components/StandardInformationAccordion/StandardInformationAccordion';
 import colors from '../theme/color';
-import {deleteTenant, putTenantOnNotice} from '../services/NetworkUtils';
-import {CredentialsContext} from '../context/CredentialsContext';
+import { deleteTenant, putTenantOnNotice } from '../services/NetworkUtils';
+import { CredentialsContext } from '../context/CredentialsContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const screenWidth = Dimensions.get('window').width;
 
-const TenantDetails = ({navigation, route}) => {
-  const {theme: mode} = useContext(ThemeContext);
-  const {credentials} = useContext(CredentialsContext);
-  const {tenant} = route.params;
+const TenantDetails = ({ navigation, route }) => {
+  const { theme: mode } = useContext(ThemeContext);
+  const { credentials } = useContext(CredentialsContext);
+  const { tenant } = route.params;
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [anchorBedId, setAnchorBedId] = useState(null);
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.background}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <Gap size="xxl" />
 
       {/* Header Banner */}
       <View
-        style={{height: 200, width: '100%', backgroundColor: colors.primary}}
+        style={{ height: 200, width: '100%', backgroundColor: colors.primary }}
       />
 
       {/* Profile Card */}
-      <View style={{paddingHorizontal: 15, marginTop: -140}}>
-        <StandardCard style={{padding: 16, borderRadius: 16, elevation: 3}}>
+      <View style={{ paddingHorizontal: 15, marginTop: -140 }}>
+        <StandardCard style={{ padding: 16, borderRadius: 16, elevation: 3 }}>
           {/* Header Row: Avatar + Name + Menu */}
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <MaterialCommunityIcons
               name="account-circle"
               size={64}
               color="#666"
-              style={{marginRight: 12}}
+              style={{ marginRight: 12 }}
             />
 
-            <View style={{flex: 1}}>
+            <View style={{ flex: 1 }}>
               <View
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                }}>
+                }}
+              >
                 <StandardText fontWeight="bold" size="xl">
                   {tenant.name}
                 </StandardText>
@@ -74,14 +75,16 @@ const TenantDetails = ({navigation, route}) => {
                         setMenuVisible(true);
                         setAnchorBedId(1);
                       }}
-                      style={{padding: 6}}>
+                      style={{ padding: 6 }}
+                    >
                       <MaterialCommunityIcons
                         name="dots-vertical"
                         size={22}
                         color="#555"
                       />
                     </TouchableOpacity>
-                  }>
+                  }
+                >
                   <Menu.Item onPress={() => {}} title="Edit" />
                   <Menu.Item onPress={() => {}} title="Share" />
                   <Menu.Item
@@ -116,7 +119,8 @@ const TenantDetails = ({navigation, route}) => {
                 textStyle={{
                   color: tenant.is_on_notice ? '#E65100' : '#2E7D32',
                   fontWeight: '600',
-                }}>
+                }}
+              >
                 {tenant.is_on_notice ? 'On Notice' : 'Active'}
               </Chip>
             </View>
@@ -132,7 +136,7 @@ const TenantDetails = ({navigation, route}) => {
           />
 
           {/* Contact Info */}
-          <View style={{flexDirection: 'row', flexWrap: 'wrap', rowGap: 10}}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 }}>
             <DetailRow
               icon="phone"
               label="Mobile"
@@ -153,7 +157,7 @@ const TenantDetails = ({navigation, route}) => {
       </View>
 
       <View style={styles.divider} />
-      <ScrollView style={{paddingHorizontal: 15, paddingTop: 10}}>
+      <ScrollView style={{ paddingHorizontal: 15, paddingTop: 10 }}>
         {/* Room & Rent Details */}
         <StandardInformationAccordion
           icon={'home'}
@@ -235,7 +239,7 @@ const TenantDetails = ({navigation, route}) => {
             <StandardText fontWeight="bold" size="lg">
               KYC Documents
             </StandardText>
-            <Chip style={styles.verifiedChip} textStyle={{color: 'green'}}>
+            <Chip style={styles.verifiedChip} textStyle={{ color: 'green' }}>
               {tenant.kyc_verified ? 'Verified' : 'Pending'}
             </Chip>
           </View>
@@ -244,11 +248,11 @@ const TenantDetails = ({navigation, route}) => {
             {tenant.kyc_docs?.map((doc, idx) => (
               <View key={idx} style={styles.card}>
                 <Image
-                  source={{uri: doc.url}}
+                  source={{ uri: doc.url }}
                   style={styles.image}
                   resizeMode="cover"
                 />
-                <View style={{padding: 5}}>
+                <View style={{ padding: 5 }}>
                   <StandardText size="sm" fontWeight="bold">
                     {doc.type}
                   </StandardText>
@@ -261,14 +265,15 @@ const TenantDetails = ({navigation, route}) => {
         <Gap size="md" />
 
         {/* Actions */}
-        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Button
             mode="outlined"
             textColor={colors.black}
-            style={{width: '45%', borderRadius: 5}}>
+            style={{ width: '45%', borderRadius: 5 }}
+          >
             <StandardText fontWeight="bold">Edit</StandardText>
           </Button>
-          <Button mode="contained" style={{width: '45%', borderRadius: 5}}>
+          <Button mode="contained" style={{ width: '45%', borderRadius: 5 }}>
             <StandardText fontWeight="bold" color="default_white">
               Record Payment
             </StandardText>
@@ -282,19 +287,20 @@ const TenantDetails = ({navigation, route}) => {
 };
 
 // Small reusable row component
-const DetailRow = ({icon, label, value, isMultiline}) => (
+const DetailRow = ({ icon, label, value, isMultiline }) => (
   <View
     style={[
       styles.row,
-      isMultiline && {flexDirection: 'column', alignItems: 'flex-start'},
-    ]}>
-    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+      isMultiline && { flexDirection: 'column', alignItems: 'flex-start' },
+    ]}
+  >
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {icon && (
         <MaterialCommunityIcons
           name={icon}
           size={20}
           color="#333"
-          style={{marginRight: 6}}
+          style={{ marginRight: 6 }}
         />
       )}
       <StandardText fontWeight="bold">{label}:</StandardText>
@@ -304,7 +310,8 @@ const DetailRow = ({icon, label, value, isMultiline}) => (
         marginLeft: isMultiline ? 0 : 6,
         flexShrink: 1,
         flexWrap: 'wrap',
-      }}>
+      }}
+    >
       {value}
     </StandardText>
   </View>
@@ -317,8 +324,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  verifiedChip: {backgroundColor: '#E8F5E9', borderRadius: 12},
-  cardRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 10},
+  verifiedChip: { backgroundColor: '#E8F5E9', borderRadius: 12 },
+  cardRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   card: {
     width: screenWidth / 2 - 25,
     backgroundColor: '#fff',
@@ -327,7 +334,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginBottom: 10,
   },
-  image: {width: '100%', height: 100},
+  image: { width: '100%', height: 100 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

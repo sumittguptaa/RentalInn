@@ -1,10 +1,9 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
 } from 'react-native';
 import {
@@ -14,19 +13,24 @@ import {
   Menu,
   TextInput as PaperInput,
 } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {ThemeContext} from '../context/ThemeContext';
-import {CredentialsContext} from '../context/CredentialsContext';
+import { ThemeContext } from '../context/ThemeContext';
+import { CredentialsContext } from '../context/CredentialsContext';
 import StandardCard from '../components/StandardCard/StandardCard';
 import Gap from '../components/Gap/Gap';
 import Share from 'react-native-share';
-import {getDocument, propertyRooms, deleteRoom} from '../services/NetworkUtils';
+import {
+  getDocument,
+  propertyRooms,
+  deleteRoom,
+} from '../services/NetworkUtils';
 import colors from '../theme/color';
 import StandardText from '../components/StandardText/StandardText';
 
-const Rooms = ({navigation}) => {
-  const {theme: mode} = useContext(ThemeContext);
-  const {credentials} = useContext(CredentialsContext);
+const Rooms = ({ navigation }) => {
+  const { theme: mode } = useContext(ThemeContext);
+  const { credentials } = useContext(CredentialsContext);
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('ALL');
   const [rooms, setRooms] = useState([]);
@@ -35,12 +39,12 @@ const Rooms = ({navigation}) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [anchorBedId, setAnchorBedId] = useState(null);
   const [filterOptions, setFilterOptions] = useState([
-    {label: 'All', key: 'ALL', value: 0},
-    {label: 'Vacant Beds', key: 'VACANT', value: 0},
-    {label: '1 Bed', key: '1', value: 0},
-    {label: '2 Beds', key: '2', value: 0},
-    {label: '3 Beds', key: '3', value: 0},
-    {label: '4 Beds', key: '4', value: 0},
+    { label: 'All', key: 'ALL', value: 0 },
+    { label: 'Vacant Beds', key: 'VACANT', value: 0 },
+    { label: '1 Bed', key: '1', value: 0 },
+    { label: '2 Beds', key: '2', value: 0 },
+    { label: '3 Beds', key: '3', value: 0 },
+    { label: '4 Beds', key: '4', value: 0 },
   ]);
 
   const accessToken = credentials.accessToken;
@@ -70,7 +74,7 @@ const Rooms = ({navigation}) => {
               imageUrl = res?.data?.download_url || null;
             } catch (err) {}
           }
-          return {...r, imageUrl}; // attach imageUrl
+          return { ...r, imageUrl }; // attach imageUrl
         }),
       );
 
@@ -92,23 +96,23 @@ const Rooms = ({navigation}) => {
       ).length;
 
       setFilterOptions([
-        {label: 'All', key: 'ALL', value: allCount},
-        {label: 'Vacant Beds', key: 'VACANT', value: vacantCount},
-        {label: '1 Bed', key: '1', value: oneBedCount},
-        {label: '2 Beds', key: '2', value: twoBedsCount},
-        {label: '3 Beds', key: '3', value: threeBedsCount},
-        {label: '4 Beds', key: '4', value: fourBedsCount},
+        { label: 'All', key: 'ALL', value: allCount },
+        { label: 'Vacant Beds', key: 'VACANT', value: vacantCount },
+        { label: '1 Bed', key: '1', value: oneBedCount },
+        { label: '2 Beds', key: '2', value: twoBedsCount },
+        { label: '3 Beds', key: '3', value: threeBedsCount },
+        { label: '4 Beds', key: '4', value: fourBedsCount },
       ]);
     } catch (err) {
       console.error('Error fetching rooms:', err);
       setError('Failed to load rooms. Please try again later.');
       setFilterOptions([
-        {label: 'All', key: 'ALL', value: 0},
-        {label: 'Vacant Beds', key: 'VACANT', value: 0},
-        {label: '4 Beds', key: '4', value: 0},
-        {label: '1 Bed', key: '1', value: 0},
-        {label: '2 Beds', key: '2', value: 0},
-        {label: '3 Beds', key: '3', value: 0},
+        { label: 'All', key: 'ALL', value: 0 },
+        { label: 'Vacant Beds', key: 'VACANT', value: 0 },
+        { label: '4 Beds', key: '4', value: 0 },
+        { label: '1 Bed', key: '1', value: 0 },
+        { label: '2 Beds', key: '2', value: 0 },
+        { label: '3 Beds', key: '3', value: 0 },
       ]);
     } finally {
       setLoading(false);
@@ -157,9 +161,10 @@ const Rooms = ({navigation}) => {
 
   return (
     <SafeAreaView
-      style={{flex: 1, backgroundColor: colors.background, marginTop: 25}}>
-      <View style={{flex: 1}}>
-        <ScrollView contentContainerStyle={{padding: 16}}>
+      style={{ flex: 1, backgroundColor: colors.background, marginTop: 25 }}
+    >
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
           {/* 🔹 Search */}
           <PaperInput
             mode="flat"
@@ -170,7 +175,7 @@ const Rooms = ({navigation}) => {
             left={<PaperInput.Icon icon="magnify" />}
             underlineColor="transparent"
             activeUnderlineColor="transparent"
-            contentStyle={{fontFamily: 'Metropolis-Medium'}}
+            contentStyle={{ fontFamily: 'Metropolis-Medium' }}
             theme={{
               roundness: 25,
               colors: {
@@ -188,7 +193,8 @@ const Rooms = ({navigation}) => {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.filterContainer}>
+            style={styles.filterContainer}
+          >
             {filterOptions.map(option => (
               <Chip
                 key={option.key}
@@ -203,7 +209,8 @@ const Rooms = ({navigation}) => {
                 textStyle={{
                   color: selectedFilter === option.key ? '#fff' : '#000',
                   fontFamily: 'Metropolis-Medium',
-                }}>
+                }}
+              >
                 {option.label} ({option.value})
               </Chip>
             ))}
@@ -211,23 +218,24 @@ const Rooms = ({navigation}) => {
 
           {/* 🔹 Loader / Error / Empty */}
           {loading && (
-            <StandardText style={{textAlign: 'center'}}>
+            <StandardText style={{ textAlign: 'center' }}>
               Loading rooms...
             </StandardText>
           )}
           {error && (
-            <View style={{alignItems: 'center'}}>
-              <StandardText style={{color: 'red'}}>{error}</StandardText>
+            <View style={{ alignItems: 'center' }}>
+              <StandardText style={{ color: 'red' }}>{error}</StandardText>
               <Button
                 mode="contained"
                 onPress={fetchRooms}
-                style={{marginTop: 10}}>
+                style={{ marginTop: 10 }}
+              >
                 Retry
               </Button>
             </View>
           )}
           {!loading && !error && filteredRooms.length === 0 && (
-            <StandardText style={{textAlign: 'center'}}>
+            <StandardText style={{ textAlign: 'center' }}>
               No rooms found
             </StandardText>
           )}
@@ -237,12 +245,13 @@ const Rooms = ({navigation}) => {
             filteredRooms.map(room => (
               <StandardCard key={room.id} style={styles.card}>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('RoomDetails', {room})}>
+                  onPress={() => navigation.navigate('RoomDetails', { room })}
+                >
                   {/* Image */}
                   {room.imageUrl ? (
                     <Image
-                      source={{uri: room.imageUrl}}
-                      style={{width: '100%', height: 150}}
+                      source={{ uri: room.imageUrl }}
+                      style={{ width: '100%', height: 150 }}
                       resizeMode="cover"
                     />
                   ) : (
@@ -256,7 +265,7 @@ const Rooms = ({navigation}) => {
                   )}
 
                   {/* Content */}
-                  <View style={{padding: 12}}>
+                  <View style={{ padding: 12 }}>
                     <View style={styles.titleRow}>
                       <StandardText fontWeight="bold" style={styles.roomTitle}>
                         {room.name || `Room ${room.id}`}
@@ -270,12 +279,14 @@ const Rooms = ({navigation}) => {
                             backgroundColor:
                               room.status === 'VACANT' ? '#DFF5E1' : '#FFE2E2',
                           },
-                        ]}>
+                        ]}
+                      >
                         <StandardText
                           style={{
                             color:
                               room.status === 'VACANT' ? '#219653' : '#D9534F',
-                          }}>
+                          }}
+                        >
                           {room.status}
                         </StandardText>
                       </View>
@@ -292,17 +303,22 @@ const Rooms = ({navigation}) => {
                             onPress={() => {
                               setMenuVisible(true);
                               setAnchorBedId(room.id);
-                            }}>
+                            }}
+                          >
                             <MaterialCommunityIcons
                               name="dots-vertical"
                               size={22}
                               color="#555"
                             />
                           </TouchableOpacity>
-                        }>
+                        }
+                      >
                         <Menu.Item
                           onPress={() =>
-                            navigation.navigate('AddRoom', {room, isEdit: true})
+                            navigation.navigate('AddRoom', {
+                              room,
+                              isEdit: true,
+                            })
                           }
                           title="Edit"
                         />
@@ -321,11 +337,12 @@ const Rooms = ({navigation}) => {
                       </Menu>
                     </View>
 
-                    <StandardText style={{marginTop: 4}}>
+                    <StandardText style={{ marginTop: 4 }}>
                       Rent:{' '}
                       <StandardText
                         fontWeight="bold"
-                        style={{color: colors.primary}}>
+                        style={{ color: colors.primary }}
+                      >
                         ₹{room.rentAmount}
                       </StandardText>
                     </StandardText>
@@ -382,7 +399,7 @@ const Rooms = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  filterContainer: {flexDirection: 'row', marginBottom: 16},
+  filterContainer: { flexDirection: 'row', marginBottom: 16 },
   filterBox: {
     paddingVertical: 10,
     borderRadius: 20,
@@ -400,8 +417,8 @@ const styles = StyleSheet.create({
     elevation: 2,
     fontFamily: 'Metropolis-Medium',
   },
-  textWrapper: {justifyContent: 'center', alignItems: 'center', flex: 1},
-  card: {marginTop: 14, borderRadius: 16, overflow: 'hidden', elevation: 3},
+  textWrapper: { justifyContent: 'center', alignItems: 'center', flex: 1 },
+  card: { marginTop: 14, borderRadius: 16, overflow: 'hidden', elevation: 3 },
   imagePlaceholder: {
     width: '100%',
     height: 150,
@@ -414,15 +431,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  roomTitle: {fontSize: 16, color: '#333'},
-  statusBadge: {borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3},
+  roomTitle: { fontSize: 16, color: '#333' },
+  statusBadge: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 8,
   },
-  infoItem: {flexDirection: 'row', alignItems: 'center'},
-  infoText: {marginLeft: 4, fontSize: 13, color: '#555'},
+  infoItem: { flexDirection: 'row', alignItems: 'center' },
+  infoText: { marginLeft: 4, fontSize: 13, color: '#555' },
   fab: {
     position: 'absolute',
     bottom: 120,
@@ -430,7 +447,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     backgroundColor: colors.primary,
   },
-  chip: {marginRight: 10, borderRadius: 20, elevation: 1},
+  chip: { marginRight: 10, borderRadius: 20, elevation: 1 },
 });
 
 export default Rooms;

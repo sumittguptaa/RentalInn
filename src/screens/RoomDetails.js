@@ -1,20 +1,20 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Image,
   Animated,
   Dimensions,
 } from 'react-native';
-import {Avatar, Chip, Menu, Text} from 'react-native-paper';
+import { Avatar, Chip, Menu, Text } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {ThemeContext} from '../context/ThemeContext';
+import { ThemeContext } from '../context/ThemeContext';
 import StandardText from '../components/StandardText/StandardText';
 import StandardCard from '../components/StandardCard/StandardCard';
 import Gap from '../components/Gap/Gap';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../theme/color';
 import {
   deleteTenant,
@@ -22,13 +22,13 @@ import {
   getTenants,
   putTenantOnNotice,
 } from '../services/NetworkUtils';
-import {CredentialsContext} from '../context/CredentialsContext';
+import { CredentialsContext } from '../context/CredentialsContext';
 
-const RoomDetails = ({navigation, route}) => {
-  const {theme: mode} = useContext(ThemeContext);
-  const {credentials} = useContext(CredentialsContext);
+const RoomDetails = ({ navigation, route }) => {
+  const { theme: mode } = useContext(ThemeContext);
+  const { credentials } = useContext(CredentialsContext);
 
-  const {room} = route.params;
+  const { room } = route.params;
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const screenWidth = Dimensions.get('window').width;
@@ -83,22 +83,23 @@ const RoomDetails = ({navigation, route}) => {
   const [anchorBedId, setAnchorBedId] = useState(null);
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: colors.background}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Image Carousel */}
-      <View style={{height: 250, marginBottom: 12}}>
+      <View style={{ height: 250, marginBottom: 12 }}>
         <Animated.ScrollView
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onScroll={Animated.event(
-            [{nativeEvent: {contentOffset: {x: scrollX}}}],
-            {useNativeDriver: false},
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false },
           )}
-          scrollEventThrottle={16}>
+          scrollEventThrottle={16}
+        >
           {imageUrls.map((img, index) => (
             <Image
               key={index}
-              source={{uri: img}}
+              source={{ uri: img }}
               style={{
                 width: screenWidth,
                 height: 250,
@@ -115,7 +116,8 @@ const RoomDetails = ({navigation, route}) => {
             bottom: 10,
             alignSelf: 'center',
             flexDirection: 'row',
-          }}>
+          }}
+        >
           {imageUrls.map((_, index) => {
             const opacity = scrollX.interpolate({
               inputRange: [
@@ -154,14 +156,15 @@ const RoomDetails = ({navigation, route}) => {
           borderTopRightRadius: 20,
           padding: 16,
           marginTop: -20,
-        }}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons
             name="door"
             size={40}
             color={colors.primary}
           />
-          <StandardText style={{marginLeft: 6}} fontWeight="bold" size="xl">
+          <StandardText style={{ marginLeft: 6 }} fontWeight="bold" size="xl">
             Room {room.name}
           </StandardText>
         </View>
@@ -172,13 +175,15 @@ const RoomDetails = ({navigation, route}) => {
             paddingHorizontal: 10,
             paddingVertical: 4,
             borderRadius: 15,
-          }}>
+          }}
+        >
           <Text
             style={{
               color: room.status === 'vacant' ? '#219653' : '#F2994A',
               fontWeight: 'bold',
               fontSize: 12,
-            }}>
+            }}
+          >
             {room.available ? 'Available' : 'Occupied'}
           </Text>
         </View>
@@ -197,29 +202,33 @@ const RoomDetails = ({navigation, route}) => {
         }}
       />
 
-      <ScrollView style={{paddingHorizontal: 15, paddingTop: 10}}>
-        <View style={{gap: 20}}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+      <ScrollView style={{ paddingHorizontal: 15, paddingTop: 10 }}>
+        <View style={{ gap: 20 }}>
+          <View
+            style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+          >
             {/* LEFT COLUMN */}
             <View>
               {/* Bed Count */}
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <MaterialCommunityIcons name="bed" size={22} color="#000" />
                 <StandardText
-                  style={{marginLeft: 6}}
+                  style={{ marginLeft: 6 }}
                   fontWeight="bold"
-                  size="md">
-                  Bed: <Text style={{color: '#F2994A'}}>{room.bedCount}</Text>
+                  size="md"
+                >
+                  Bed: <Text style={{ color: '#F2994A' }}>{room.bedCount}</Text>
                 </StandardText>
               </View>
 
               {/* Available */}
               <StandardText
-                style={{marginLeft: 28, color: 'gray', marginTop: 4}}
-                size="sm">
+                style={{ marginLeft: 28, color: 'gray', marginTop: 4 }}
+                size="sm"
+              >
                 Available:{' '}
                 {room.bedCount > 0 &&
-                  Array.from({length: room.bedCount - tenants.length}).map(
+                  Array.from({ length: room.bedCount - tenants.length }).map(
                     (_, index) => (
                       <MaterialCommunityIcons
                         key={index}
@@ -233,8 +242,9 @@ const RoomDetails = ({navigation, route}) => {
 
               {/* Occupied */}
               <StandardText
-                style={{marginLeft: 28, color: 'gray', marginTop: 2}}
-                size="sm">
+                style={{ marginLeft: 28, color: 'gray', marginTop: 2 }}
+                size="sm"
+              >
                 Occupied:{' '}
                 {!!tenants &&
                   tenants.length > 0 &&
@@ -254,20 +264,22 @@ const RoomDetails = ({navigation, route}) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   marginTop: 16,
-                }}>
+                }}
+              >
                 <MaterialCommunityIcons name="cash" size={22} color="#000" />
                 <StandardText
-                  style={{marginLeft: 6}}
+                  style={{ marginLeft: 6 }}
                   fontWeight="bold"
-                  size="md">
+                  size="md"
+                >
                   Rent Due:{' '}
-                  <Text style={{color: '#F2994A'}}>
+                  <Text style={{ color: '#F2994A' }}>
                     {room.rentDueCount || 0}
                   </Text>
                 </StandardText>
               </View>
               {/* Rent Due People */}
-              <View style={{marginLeft: 28, marginTop: 6}}>
+              <View style={{ marginLeft: 28, marginTop: 6 }}>
                 {['Rihaa Kapoor', 'Schmidt'].map((name, idx) => (
                   <View
                     key={idx}
@@ -275,7 +287,8 @@ const RoomDetails = ({navigation, route}) => {
                       flexDirection: 'row',
                       alignItems: 'center',
                       marginBottom: 4,
-                    }}>
+                    }}
+                  >
                     {/* <Avatar.Image
                       size={24}
                       source={require('../assets/avatar-placeholder.png')} // Replace with real image if needed
@@ -285,7 +298,7 @@ const RoomDetails = ({navigation, route}) => {
                       size={22}
                       color="#000"
                     />
-                    <StandardText style={{marginLeft: 8}} size="sm">
+                    <StandardText style={{ marginLeft: 8 }} size="sm">
                       {name}
                     </StandardText>
                   </View>
@@ -296,25 +309,27 @@ const RoomDetails = ({navigation, route}) => {
             {/* RIGHT COLUMN */}
             <View>
               {/* Active Ticket */}
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <MaterialCommunityIcons
                   name="ticket-confirmation"
                   size={22}
                   color="#000"
                 />
                 <StandardText
-                  style={{marginLeft: 6}}
+                  style={{ marginLeft: 6 }}
                   fontWeight="bold"
-                  size="md">
+                  size="md"
+                >
                   Active Ticket:{' '}
-                  <Text style={{color: '#F2994A'}}>
+                  <Text style={{ color: '#F2994A' }}>
                     {room.activeTickets || 0}
                   </Text>
                 </StandardText>
               </View>
               <StandardText
-                style={{marginLeft: 28, color: 'gray', marginTop: 4}}
-                size="sm">
+                style={{ marginLeft: 28, color: 'gray', marginTop: 4 }}
+                size="sm"
+              >
                 {room.ticketMessage || 'Cupboard door needs fixing'}
               </StandardText>
 
@@ -324,22 +339,24 @@ const RoomDetails = ({navigation, route}) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   marginTop: 16,
-                }}>
+                }}
+              >
                 <MaterialCommunityIcons
                   name="calendar-alert"
                   size={22}
                   color="#000"
                 />
                 <StandardText
-                  style={{marginLeft: 6}}
+                  style={{ marginLeft: 6 }}
                   fontWeight="bold"
-                  size="md">
+                  size="md"
+                >
                   Under Notice:{' '}
-                  <Text style={{color: '#F2994A'}}>{room.room || 0}</Text>
+                  <Text style={{ color: '#F2994A' }}>{room.room || 0}</Text>
                 </StandardText>
               </View>
-              <View style={{marginLeft: 28, marginTop: 6}}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ marginLeft: 28, marginTop: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   {/* <Avatar.Image
                     size={24}
                     source={require('../assets/avatar-placeholder.png')} // Replace with real image if needed
@@ -349,7 +366,7 @@ const RoomDetails = ({navigation, route}) => {
                     size={22}
                     color="#000"
                   />
-                  <StandardText style={{marginLeft: 8}} size="sm">
+                  <StandardText style={{ marginLeft: 8 }} size="sm">
                     Rihan Kapoor
                   </StandardText>
                 </View>
@@ -358,19 +375,20 @@ const RoomDetails = ({navigation, route}) => {
           </View>
         </View>
         <View>
-          <StandardText fontWeight="bold" size="md" style={{marginBottom: 8}}>
+          <StandardText fontWeight="bold" size="md" style={{ marginBottom: 8 }}>
             Amenities
           </StandardText>
-          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 10}}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {(room.amenities
               ? room.amenities.split(',').map(item => item.trim())
               : ['WiFi', 'AC', 'Heater', 'Wardrobe', 'Attached Bathroom']
             ).map((item, idx) => (
               <Chip
                 key={idx}
-                style={{backgroundColor: '#F0F0F0'}}
-                textStyle={{fontWeight: '500'}}
-                icon="check">
+                style={{ backgroundColor: '#F0F0F0' }}
+                textStyle={{ fontWeight: '500' }}
+                icon="check"
+              >
                 {item}
               </Chip>
             ))}
@@ -389,14 +407,15 @@ const RoomDetails = ({navigation, route}) => {
           }}
         />
 
-        <StandardText fontWeight="bold" size="xl" style={{marginBottom: 8}}>
+        <StandardText fontWeight="bold" size="xl" style={{ marginBottom: 8 }}>
           List of Tenants
         </StandardText>
 
         {tenants.map(tenant => (
           <StandardCard key={tenant.id} style={styles.card}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('TenantDetails', {tenant})}>
+              onPress={() => navigation.navigate('TenantDetails', { tenant })}
+            >
               <View style={styles.row}>
                 {/* Avatar */}
                 <Avatar.Image
@@ -404,11 +423,11 @@ const RoomDetails = ({navigation, route}) => {
                   source={{
                     uri: 'https://avatar.iran.liara.run/public/37',
                   }}
-                  style={{marginRight: 14}}
+                  style={{ marginRight: 14 }}
                 />
 
                 {/* Info Section */}
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <View style={styles.rowBetween}>
                     <StandardText fontWeight="bold" size="lg">
                       {tenant.name}
@@ -426,14 +445,16 @@ const RoomDetails = ({navigation, route}) => {
                           onPress={() => {
                             setMenuVisible(true);
                             setAnchorBedId(tenant.id);
-                          }}>
+                          }}
+                        >
                           <MaterialCommunityIcons
                             name="dots-vertical"
                             size={22}
                             color="#444"
                           />
                         </TouchableOpacity>
-                      }>
+                      }
+                    >
                       <Menu.Item onPress={() => {}} title="Edit" />
                       <Menu.Item onPress={() => {}} title="Share" />
                       <Menu.Item
@@ -441,7 +462,7 @@ const RoomDetails = ({navigation, route}) => {
                           putTenantOnNotice(
                             credentials.accessToken,
                             tenant.id,
-                            {notice: true},
+                            { notice: true },
                           );
                         }}
                         title="Put on Notice"
@@ -466,25 +487,27 @@ const RoomDetails = ({navigation, route}) => {
                   </View>
 
                   {/* Quick badges */}
-                  <View style={{flexDirection: 'row', marginTop: 6}}>
+                  <View style={{ flexDirection: 'row', marginTop: 6 }}>
                     {tenant.has_dues && (
                       <Chip
                         style={styles.badgeDues}
-                        textStyle={{color: '#fff'}}>
+                        textStyle={{ color: '#fff' }}
+                      >
                         Dues
                       </Chip>
                     )}
                     {tenant.is_on_notice && (
                       <Chip
                         style={styles.badgeNotice}
-                        textStyle={{color: '#fff'}}>
+                        textStyle={{ color: '#fff' }}
+                      >
                         Notice
                       </Chip>
                     )}
                   </View>
 
                   {/* Small details */}
-                  <View style={{marginTop: 8}}>
+                  <View style={{ marginTop: 8 }}>
                     <View style={styles.detailRow}>
                       <MaterialCommunityIcons
                         name="alert-circle"
@@ -553,33 +576,33 @@ const RoomDetails = ({navigation, route}) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {flex: 1, backgroundColor: colors.background, marginTop: 25},
+  safeArea: { flex: 1, backgroundColor: colors.background, marginTop: 25 },
   searchBar: {
     marginBottom: 10,
     backgroundColor: '#fff',
     borderRadius: 25,
     elevation: 2,
   },
-  chip: {marginRight: 10, borderRadius: 20, elevation: 1},
+  chip: { marginRight: 10, borderRadius: 20, elevation: 1 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 3},
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,
   },
-  row: {flexDirection: 'row', alignItems: 'center'},
+  row: { flexDirection: 'row', alignItems: 'center' },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  detailRow: {flexDirection: 'row', alignItems: 'center', marginBottom: 4},
-  detailText: {marginLeft: 6, color: '#444'},
+  detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  detailText: { marginLeft: 6, color: '#444' },
   badgeDues: {
     backgroundColor: '#e53935',
     marginRight: 6,
