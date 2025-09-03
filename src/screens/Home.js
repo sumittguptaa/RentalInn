@@ -423,7 +423,9 @@ const Home = ({ navigation }) => {
           {/* Paid vs Overdue + Revenue Trend */}
           {console.log('piePaidVsDue', piePaidVsDue)}
           <View style={{ gap: 12 }}>
-            <StandardCard>
+            <StandardCard
+              style={[styles.kpiCard, { height: 300, width: '100%' }]}
+            >
               <StandardText size="lg" fontWeight="bold" textAlign="center">
                 Rent Collection
               </StandardText>
@@ -444,7 +446,9 @@ const Home = ({ navigation }) => {
               />
             </StandardCard>
 
-            <StandardCard>
+            <StandardCard
+              style={[styles.kpiCard, { height: 350, width: '100%' }]}
+            >
               <StandardText size="lg" fontWeight="bold" textAlign="center">
                 Revenue & Vacancy Loss
               </StandardText>
@@ -475,7 +479,9 @@ const Home = ({ navigation }) => {
           <Gap size="md" />
 
           {/* Auto-Reconciliation (Payment Inbox Preview) */}
-          <StandardCard>
+          <StandardCard
+            style={[styles.kpiCard, { height: 400, width: '100%' }]}
+          >
             <View style={styles.rowBetween}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <MaterialCommunityIcons
@@ -531,7 +537,9 @@ const Home = ({ navigation }) => {
           <Gap size="md" />
 
           {/* P&L by scope */}
-          <StandardCard>
+          <StandardCard
+            style={[styles.kpiCard, { height: 500, width: '100%' }]}
+          >
             <StandardText size="lg" fontWeight="bold">
               Profit & Loss —{' '}
               {scope === 'property'
@@ -613,7 +621,9 @@ const Home = ({ navigation }) => {
           <Gap size="md" />
 
           {/* Forecasts */}
-          <StandardCard>
+          <StandardCard
+            style={[styles.kpiCard, { height: 450, width: '100%' }]}
+          >
             <StandardText size="lg" fontWeight="bold" textAlign="center">
               Forecast — Revenue & Vacancy Loss (Next 6 Months)
             </StandardText>
@@ -643,20 +653,28 @@ const Home = ({ navigation }) => {
           <Gap size="md" />
 
           {/* Issues & Maintenance Board */}
-          <StandardCard>
+          <StandardCard
+            style={[styles.kpiCard, { height: 350, width: '100%' }]}
+          >
             <View style={styles.rowBetween}>
               <StandardText size="lg" fontWeight="bold">
                 Issues & Maintenance
               </StandardText>
-              <Button mode="outlined" onPress={() => {}}>
-                New Ticket
-              </Button>
             </View>
             {maintenanceRequests.map(req => (
               <List.Item
                 key={req.id}
                 title={req.title}
                 description={`Priority: ${req.priority}`}
+                titleStyle={{
+                  fontFamily: 'Metropolis-Medium',
+                  fontSize: 16,
+                }}
+                descriptionStyle={{
+                  fontFamily: 'Metropolis-Regular',
+                  fontSize: 14,
+                }}
+                style={{}}
                 left={() => (
                   <MaterialCommunityIcons
                     name="wrench"
@@ -664,7 +682,16 @@ const Home = ({ navigation }) => {
                     color={colors.primary}
                   />
                 )}
-                right={() => <Chip>{req.status}</Chip>}
+                right={() => (
+                  <Chip
+                    textStyle={{
+                      fontFamily: 'Metropolis-Medium',
+                      fontSize: 14,
+                    }}
+                  >
+                    {req.status}
+                  </Chip>
+                )}
               />
             ))}
           </StandardCard>
@@ -672,7 +699,9 @@ const Home = ({ navigation }) => {
           <Gap size="md" />
 
           {/* Tenant Leaderboard */}
-          <StandardCard>
+          <StandardCard
+            style={[styles.kpiCard, { height: 300, width: '100%' }]}
+          >
             <StandardText size="lg" fontWeight="bold">
               Top Tenants
             </StandardText>
@@ -681,6 +710,15 @@ const Home = ({ navigation }) => {
                 key={t.id}
                 title={`${t.name} — ${t.room}`}
                 description={t.status}
+                titleStyle={{
+                  fontFamily: 'Metropolis-Medium',
+                  fontSize: 16,
+                }}
+                descriptionStyle={{
+                  fontFamily: 'Metropolis-Regular',
+                  fontSize: 14,
+                }}
+                style={{}}
                 left={() => <Avatar.Icon size={36} icon="account-circle" />}
                 right={() =>
                   t.status === 'On-time' ? (
@@ -697,7 +735,9 @@ const Home = ({ navigation }) => {
 
           {/* 🪪 Tenant KYC Status */}
           {/* 🪪 Tenant KYC Overview */}
-          <StandardCard>
+          <StandardCard
+            style={[styles.kpiCard, { height: 350, width: '100%' }]}
+          >
             <View
               style={{
                 flexDirection: 'row',
@@ -783,7 +823,9 @@ const Home = ({ navigation }) => {
           <Gap size="md" />
 
           {/* Occupancy Grid */}
-          <StandardCard>
+          <StandardCard
+            sstyle={[styles.kpiCard, { height: 300, width: '100%' }]}
+          >
             <StandardText size="lg" fontWeight="bold">
               Room Occupancy Map
             </StandardText>
@@ -878,7 +920,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  kpiCard: { width: '32%', padding: 12, borderRadius: 12 },
+  kpiCard: {
+    width: '32%',
+    // padding: 12,
+    // borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
 
   rowBetween: {
     flexDirection: 'row',

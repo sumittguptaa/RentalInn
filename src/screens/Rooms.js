@@ -1,18 +1,20 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   Image,
+  Modal,
+  Pressable,
 } from 'react-native';
-import {
-  Button,
-  Chip,
-  FAB,
-  Menu,
-  TextInput as PaperInput,
-} from 'react-native-paper';
+import { Button, Chip, FAB, TextInput as PaperInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../context/ThemeContext';
@@ -31,13 +33,19 @@ import StandardText from '../components/StandardText/StandardText';
 const Rooms = ({ navigation }) => {
   const { theme: mode } = useContext(ThemeContext);
   const { credentials } = useContext(CredentialsContext);
+
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('ALL');
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // 🔹 Menu state
   const [menuVisible, setMenuVisible] = useState(false);
-  const [anchorBedId, setAnchorBedId] = useState(null);
+  const [menuCoords, setMenuCoords] = useState({ x: 0, y: 0 });
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const iconRefs = useRef({});
+
   const [filterOptions, setFilterOptions] = useState([
     { label: 'All', key: 'ALL', value: 0 },
     { label: 'Vacant Beds', key: 'VACANT', value: 0 },
@@ -50,7 +58,7 @@ const Rooms = ({ navigation }) => {
   const accessToken = credentials.accessToken;
   const propertyId = credentials.property_id;
 
-  // 🔹 Fetch rooms with image URLs
+  // 🔹 Fetch rooms
   const fetchRooms = useCallback(async () => {
     if (!accessToken || !propertyId) {
       setError('Missing access token or property ID');
@@ -63,7 +71,6 @@ const Rooms = ({ navigation }) => {
       const response = await propertyRooms(accessToken, propertyId);
       const roomData = response.data.items || [];
 
-      // Resolve image URLs for each room
       const roomsWithImages = await Promise.all(
         roomData.map(async r => {
           let imageUrl = null;
@@ -74,14 +81,14 @@ const Rooms = ({ navigation }) => {
               imageUrl = res?.data?.download_url || null;
             } catch (err) {}
           }
-          return { ...r, imageUrl }; // attach imageUrl
+          return { ...r, imageUrl };
         }),
       );
 
       setRooms(roomsWithImages);
       setError(null);
 
-      // Calculate filter values
+      // Update filter counts
       const allCount = roomsWithImages.length;
       const vacantCount = roomsWithImages.filter(
         r => r.status === 'VACANT',
@@ -106,14 +113,6 @@ const Rooms = ({ navigation }) => {
     } catch (err) {
       console.error('Error fetching rooms:', err);
       setError('Failed to load rooms. Please try again later.');
-      setFilterOptions([
-        { label: 'All', key: 'ALL', value: 0 },
-        { label: 'Vacant Beds', key: 'VACANT', value: 0 },
-        { label: '4 Beds', key: '4', value: 0 },
-        { label: '1 Bed', key: '1', value: 0 },
-        { label: '2 Beds', key: '2', value: 0 },
-        { label: '3 Beds', key: '3', value: 0 },
-      ]);
     } finally {
       setLoading(false);
     }
@@ -127,10 +126,10 @@ const Rooms = ({ navigation }) => {
 
   // 🔹 Filtering
   const filteredRooms = rooms
-    .filter(room => {
-      if (!search) return true;
-      return room.name?.toLowerCase().includes(search.toLowerCase());
-    })
+    .filter(
+      room =>
+        !search || room.name?.toLowerCase().includes(search.toLowerCase()),
+    )
     .filter(room => {
       if (selectedFilter === 'ALL') return true;
       if (selectedFilter === 'VACANT') return room.status === 'VACANT';
@@ -159,13 +158,22 @@ const Rooms = ({ navigation }) => {
     } catch (err) {}
   };
 
+  // 🔹 Open menu
+  const openMenu = (room, id) => {
+    iconRefs.current[id]?.measureInWindow((x, y, width, height) => {
+      setMenuCoords({ x, y: y + height });
+      setSelectedRoom(room);
+      setMenuVisible(true);
+    });
+  };
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.background, marginTop: 25 }}
     >
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ padding: 16 }}>
-          {/* 🔹 Search */}
+          {/* Search */}
           <PaperInput
             mode="flat"
             placeholder="Search Rooms..."
@@ -182,14 +190,13 @@ const Rooms = ({ navigation }) => {
                 background: '#fff',
                 text: '#000',
                 placeholder: '#888',
-                fontFamily: 'Metropolis-Medium',
               },
             }}
           />
 
           <Gap size="md" />
 
-          {/* 🔹 Filters */}
+          {/* Filters */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -216,7 +223,7 @@ const Rooms = ({ navigation }) => {
             ))}
           </ScrollView>
 
-          {/* 🔹 Loader / Error / Empty */}
+          {/* Loader / Error / Empty */}
           {loading && (
             <StandardText style={{ textAlign: 'center' }}>
               Loading rooms...
@@ -240,7 +247,7 @@ const Rooms = ({ navigation }) => {
             </StandardText>
           )}
 
-          {/* 🔹 Room Cards */}
+          {/* Rooms */}
           {!loading &&
             filteredRooms.map(room => (
               <StandardCard key={room.id} style={styles.card}>
@@ -271,7 +278,6 @@ const Rooms = ({ navigation }) => {
                         {room.name || `Room ${room.id}`}
                       </StandardText>
 
-                      {/* Status */}
                       <View
                         style={[
                           styles.statusBadge,
@@ -291,50 +297,17 @@ const Rooms = ({ navigation }) => {
                         </StandardText>
                       </View>
 
-                      {/* Menu */}
-                      <Menu
-                        visible={menuVisible && anchorBedId === room.id}
-                        onDismiss={() => {
-                          setMenuVisible(false);
-                          setAnchorBedId(null);
-                        }}
-                        anchor={
-                          <TouchableOpacity
-                            onPress={() => {
-                              setMenuVisible(true);
-                              setAnchorBedId(room.id);
-                            }}
-                          >
-                            <MaterialCommunityIcons
-                              name="dots-vertical"
-                              size={22}
-                              color="#555"
-                            />
-                          </TouchableOpacity>
-                        }
+                      {/* Custom Menu Trigger */}
+                      <TouchableOpacity
+                        ref={ref => (iconRefs.current[room.id] = ref)}
+                        onPress={() => openMenu(room, room.id)}
                       >
-                        <Menu.Item
-                          onPress={() =>
-                            navigation.navigate('AddRoom', {
-                              room,
-                              isEdit: true,
-                            })
-                          }
-                          title="Edit"
+                        <MaterialCommunityIcons
+                          name="dots-vertical"
+                          size={22}
+                          color="#555"
                         />
-                        <Menu.Item
-                          onPress={() => handleShareRoom(room)}
-                          title="Share"
-                        />
-                        <Menu.Item onPress={() => {}} title="Send Message" />
-                        <Menu.Item
-                          onPress={async () => {
-                            await deleteRoom(accessToken, propertyId, room.id);
-                            fetchRooms();
-                          }}
-                          title="Delete"
-                        />
-                      </Menu>
+                      </TouchableOpacity>
                     </View>
 
                     <StandardText style={{ marginTop: 4 }}>
@@ -347,7 +320,6 @@ const Rooms = ({ navigation }) => {
                       </StandardText>
                     </StandardText>
 
-                    {/* Info Row */}
                     <View style={styles.infoRow}>
                       <View style={styles.infoItem}>
                         <MaterialCommunityIcons
@@ -386,13 +358,98 @@ const Rooms = ({ navigation }) => {
             ))}
         </ScrollView>
 
-        {/* 🔹 FAB */}
+        {/* FAB */}
         <FAB
           icon="plus"
           color="#fff"
           style={styles.fab}
           onPress={() => navigation.navigate('AddRoom')}
         />
+
+        {/* Popup Menu */}
+        <Modal
+          visible={menuVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setMenuVisible(false)}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setMenuVisible(false)}
+          >
+            <View
+              style={[
+                styles.menuContainer,
+                { top: menuCoords.y, left: menuCoords.x - 150 }, // shift left
+              ]}
+            >
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  navigation.navigate('AddRoom', {
+                    room: selectedRoom,
+                    isEdit: true,
+                  });
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="pencil"
+                  size={18}
+                  color="#555"
+                  style={{ marginRight: 10 }}
+                />
+                <StandardText>Edit</StandardText>
+              </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  handleShareRoom(selectedRoom);
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="share"
+                  size={18}
+                  color="#555"
+                  style={{ marginRight: 10 }}
+                />
+                <StandardText>Share</StandardText>
+              </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  // Add your message handling
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="message"
+                  size={18}
+                  color="#555"
+                  style={{ marginRight: 10 }}
+                />
+                <StandardText>Send Message</StandardText>
+              </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={async () => {
+                  setMenuVisible(false);
+                  await deleteRoom(accessToken, propertyId, selectedRoom.id);
+                  fetchRooms();
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="trash-can"
+                  size={18}
+                  color="#555"
+                  style={{ marginRight: 10, color: 'red' }}
+                />
+                <StandardText style={{ color: 'red' }}>Delete</StandardText>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -400,24 +457,12 @@ const Rooms = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   filterContainer: { flexDirection: 'row', marginBottom: 16 },
-  filterBox: {
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#e0e0e0',
-    marginRight: 10,
-    height: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 80,
-  },
   searchBar: {
     marginBottom: 10,
     backgroundColor: '#fff',
     borderRadius: 25,
     elevation: 2,
-    fontFamily: 'Metropolis-Medium',
   },
-  textWrapper: { justifyContent: 'center', alignItems: 'center', flex: 1 },
   card: { marginTop: 14, borderRadius: 16, overflow: 'hidden', elevation: 3 },
   imagePlaceholder: {
     width: '100%',
@@ -448,6 +493,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   chip: { marginRight: 10, borderRadius: 20, elevation: 1 },
+  menuContainer: {
+    position: 'absolute',
+    width: 150,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  menuItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 });
 
 export default Rooms;

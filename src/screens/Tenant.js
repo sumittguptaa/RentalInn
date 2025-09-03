@@ -1,6 +1,18 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { Avatar, FAB, Menu, Chip } from 'react-native-paper';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
+import { Avatar, FAB, Chip } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { TextInput as PaperInput } from 'react-native-paper';
 import { ThemeContext } from '../context/ThemeContext';
@@ -16,6 +28,8 @@ import {
 import { CredentialsContext } from '../context/CredentialsContext';
 import colors from '../theme/color';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const Tenants = ({ navigation }) => {
   const { credentials } = useContext(CredentialsContext);
   const { theme: mode } = useContext(ThemeContext);
@@ -24,8 +38,12 @@ const Tenants = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [anchorBedId, setAnchorBedId] = useState(null);
+  // menu state
+  const [activeMenuTenantId, setActiveMenuTenantId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState(null); // { x, y, width, height }
+
+  const anchorRefs = useRef({}); // store refs to icon buttons
+
   const [tenants, setTenants] = useState([]);
   const [filterOptions, setFilterOptions] = useState([
     { label: 'All', key: 'all', value: 0 },
@@ -64,11 +82,9 @@ const Tenants = ({ navigation }) => {
 
   // Filter tenants based on selectedFilter and search
   const filteredTenants = tenants.filter(tenant => {
-    // Search filter
     const matchesSearch = tenant.name
       .toLowerCase()
       .includes(search.toLowerCase());
-    // Filter chips
     if (selectedFilter === 'dues') {
       return tenant.has_dues && matchesSearch;
     } else if (selectedFilter === 'no_dues') {
@@ -76,7 +92,6 @@ const Tenants = ({ navigation }) => {
     } else if (selectedFilter === 'notice') {
       return tenant.is_on_notice && matchesSearch;
     }
-    // 'all' filter
     return matchesSearch;
   });
 
@@ -85,12 +100,44 @@ const Tenants = ({ navigation }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilter, search]);
 
+  // Open menu by measuring position of the icon using measureInWindow
+  const openMenu = tenantId => {
+    const ref = anchorRefs.current[tenantId];
+    if (!ref || !ref.measureInWindow) {
+      // fallback: just open at center
+      setMenuPosition({
+        x: SCREEN_WIDTH / 2 - 80,
+        y: 200,
+        width: 0,
+        height: 0,
+      });
+      setActiveMenuTenantId(tenantId);
+      return;
+    }
+
+    ref.measureInWindow((x, y, width, height) => {
+      setMenuPosition({ x, y, width, height });
+      setActiveMenuTenantId(tenantId);
+    });
+  };
+
+  const closeMenu = () => {
+    setActiveMenuTenantId(null);
+    setMenuPosition(null);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1 }}>
           {/* Main content */}
-          <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <ScrollView
+            contentContainerStyle={{ padding: 16 }}
+            onScrollBeginDrag={() => {
+              // hide menu on scroll to avoid stale position
+              closeMenu();
+            }}
+          >
             {/* Search */}
             <PaperInput
               mode="flat"
@@ -173,51 +220,18 @@ const Tenants = ({ navigation }) => {
                           {tenant.name}
                         </StandardText>
 
-                        {/* Menu */}
-                        <Menu
-                          visible={menuVisible && anchorBedId === tenant.id}
-                          onDismiss={() => {
-                            setMenuVisible(false);
-                            setAnchorBedId(null);
-                          }}
-                          anchor={
-                            <TouchableOpacity
-                              onPress={() => {
-                                setMenuVisible(true);
-                                setAnchorBedId(tenant.id);
-                              }}
-                            >
-                              <MaterialCommunityIcons
-                                name="dots-vertical"
-                                size={22}
-                                color="#444"
-                              />
-                            </TouchableOpacity>
-                          }
+                        {/* anchor button (we keep ref on this button) */}
+                        <TouchableOpacity
+                          ref={r => (anchorRefs.current[tenant.id] = r)}
+                          onPress={() => openMenu(tenant.id)}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
-                          <Menu.Item onPress={() => {}} title="Edit" />
-                          <Menu.Item onPress={() => {}} title="Share" />
-                          <Menu.Item
-                            onPress={() => {
-                              putTenantOnNotice(
-                                credentials.accessToken,
-                                tenant.id,
-                                { notice: true },
-                              );
-                            }}
-                            title="Put on Notice"
+                          <MaterialCommunityIcons
+                            name="dots-vertical"
+                            size={22}
+                            color="#444"
                           />
-                          <Menu.Item
-                            onPress={async () => {
-                              await deleteTenant(
-                                credentials.accessToken,
-                                tenant.id,
-                              );
-                              fetchData();
-                            }}
-                            title="Delete"
-                          />
-                        </Menu>
+                        </TouchableOpacity>
                       </View>
 
                       {/* Quick badges */}
@@ -249,7 +263,7 @@ const Tenants = ({ navigation }) => {
                             color="#555"
                           />
                           <StandardText style={styles.detailText}>
-                            {tenant.room.name}
+                            {tenant?.room?.name || 'No room assigned'}
                           </StandardText>
                         </View>
 
@@ -260,7 +274,7 @@ const Tenants = ({ navigation }) => {
                             color="#555"
                           />
                           <StandardText style={styles.detailText}>
-                            ₹{tenant.room.rentAmount}
+                            ₹{tenant?.room?.rentAmount || 'N/A'}
                           </StandardText>
                         </View>
 
@@ -291,6 +305,88 @@ const Tenants = ({ navigation }) => {
             style={styles.fab}
             onPress={() => navigation.navigate('AddTenant')}
           />
+
+          {/* CUSTOM MENU OVERLAY (renders at top level using measured coords) */}
+          {activeMenuTenantId && menuPosition && (
+            <TouchableOpacity
+              style={styles.menuOverlay}
+              activeOpacity={1}
+              onPress={() => closeMenu()}
+            >
+              <View
+                style={[
+                  styles.popup,
+                  {
+                    top: menuPosition.y + menuPosition.height + 6,
+                    left: Math.max(
+                      8,
+                      Math.min(menuPosition.x, SCREEN_WIDTH - 180),
+                    ),
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    // example: navigate to edit screen
+                    closeMenu();
+                    navigation.navigate('EditTenant', {
+                      tenantId: activeMenuTenantId,
+                    });
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="pencil"
+                    size={18}
+                    color="#555"
+                    style={{ marginRight: 10 }}
+                  />
+                  <StandardText>Edit</StandardText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    putTenantOnNotice(
+                      credentials.accessToken,
+                      activeMenuTenantId,
+                      { notice: true },
+                    );
+                    closeMenu();
+                    fetchData();
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="alert-circle-outline"
+                    size={18}
+                    color="#e53935"
+                    style={{ marginRight: 10 }}
+                  />
+                  <StandardText>Put on Notice</StandardText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={async () => {
+                    await deleteTenant(
+                      credentials.accessToken,
+                      activeMenuTenantId,
+                    );
+                    closeMenu();
+                    fetchData();
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="trash-can-outline"
+                    size={18}
+                    color="#e53935"
+                    style={{ marginRight: 10 }}
+                  />
+                  <StandardText>Delete</StandardText>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -342,6 +438,34 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     bottom: 120,
     backgroundColor: colors.primary,
+  },
+
+  /* overlay + popup styles */
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  popup: {
+    position: 'absolute',
+    minWidth: 160,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  menuItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

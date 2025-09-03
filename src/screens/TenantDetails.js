@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -7,7 +7,7 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { Button, Chip, Menu } from 'react-native-paper';
+import { Button, Chip } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../context/ThemeContext';
 import StandardText from '../components/StandardText/StandardText';
@@ -26,8 +26,26 @@ const TenantDetails = ({ navigation, route }) => {
   const { credentials } = useContext(CredentialsContext);
   const { tenant } = route.params;
 
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [anchorBedId, setAnchorBedId] = useState(null);
+  const [activeMenu, setActiveMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState(null);
+  const anchorRef = useRef(null);
+
+  const openMenu = () => {
+    if (!anchorRef.current || !anchorRef.current.measureInWindow) {
+      setMenuPosition({ x: screenWidth / 2 - 80, y: 200, width: 0, height: 0 });
+      setActiveMenu(true);
+      return;
+    }
+    anchorRef.current.measureInWindow((x, y, width, height) => {
+      setMenuPosition({ x, y, width, height });
+      setActiveMenu(true);
+    });
+  };
+
+  const closeMenu = () => {
+    setActiveMenu(false);
+    setMenuPosition(null);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -62,51 +80,19 @@ const TenantDetails = ({ navigation, route }) => {
                   {tenant.name}
                 </StandardText>
 
-                {/* Menu */}
-                <Menu
-                  visible={menuVisible && anchorBedId === 1}
-                  onDismiss={() => {
-                    setMenuVisible(false);
-                    setAnchorBedId(null);
-                  }}
-                  anchor={
-                    <TouchableOpacity
-                      onPress={() => {
-                        setMenuVisible(true);
-                        setAnchorBedId(1);
-                      }}
-                      style={{ padding: 6 }}
-                    >
-                      <MaterialCommunityIcons
-                        name="dots-vertical"
-                        size={22}
-                        color="#555"
-                      />
-                    </TouchableOpacity>
-                  }
+                {/* Custom Menu Anchor */}
+                <TouchableOpacity
+                  ref={anchorRef}
+                  onPress={openMenu}
+                  style={{ padding: 6 }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Menu.Item onPress={() => {}} title="Edit" />
-                  <Menu.Item onPress={() => {}} title="Share" />
-                  <Menu.Item
-                    onPress={async () => {
-                      await putTenantOnNotice(
-                        credentials.accessToken,
-                        tenant.id,
-                        {
-                          notice: true,
-                        },
-                      );
-                    }}
-                    title="Put on Notice"
+                  <MaterialCommunityIcons
+                    name="dots-vertical"
+                    size={22}
+                    color="#555"
                   />
-                  <Menu.Item
-                    onPress={async () => {
-                      await deleteTenant(credentials.accessToken, tenant.id);
-                      navigation.goBack();
-                    }}
-                    title="Delete"
-                  />
-                </Menu>
+                </TouchableOpacity>
               </View>
 
               {/* Status Chip */}
@@ -282,6 +268,86 @@ const TenantDetails = ({ navigation, route }) => {
 
         <Gap size="xxl" />
       </ScrollView>
+
+      {/* CUSTOM MENU OVERLAY */}
+      {activeMenu && menuPosition && (
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={closeMenu}
+        >
+          <View
+            style={[
+              styles.popup,
+              {
+                top: menuPosition.y + menuPosition.height + 6,
+                left: Math.max(8, Math.min(menuPosition.x, screenWidth - 180)),
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                closeMenu();
+                navigation.navigate('EditTenant', { tenantId: tenant.id });
+              }}
+            >
+              <MaterialCommunityIcons
+                name="pencil"
+                size={18}
+                color="#555"
+                style={{ marginRight: 10 }}
+              />
+              <StandardText>Edit</StandardText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
+              <MaterialCommunityIcons
+                name="share-variant"
+                size={18}
+                color="#555"
+                style={{ marginRight: 10 }}
+              />
+              <StandardText>Share</StandardText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={async () => {
+                await putTenantOnNotice(credentials.accessToken, tenant.id, {
+                  notice: true,
+                });
+                closeMenu();
+              }}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={18}
+                color="#e53935"
+                style={{ marginRight: 10 }}
+              />
+              <StandardText>Put on Notice</StandardText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={async () => {
+                await deleteTenant(credentials.accessToken, tenant.id);
+                closeMenu();
+                navigation.goBack();
+              }}
+            >
+              <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={18}
+                color="#e53935"
+                style={{ marginRight: 10 }}
+              />
+              <StandardText>Delete</StandardText>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -348,6 +414,32 @@ const styles = StyleSheet.create({
     width: '70%',
     borderRadius: 5,
     alignSelf: 'center',
+  },
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  popup: {
+    position: 'absolute',
+    minWidth: 160,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  menuItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 
