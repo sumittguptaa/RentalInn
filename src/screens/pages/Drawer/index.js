@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Image, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -37,7 +37,10 @@ const DrawerContent = () => {
           onPress={() =>
             hasChildren
               ? toggleExpand(item.label)
-              : navigation.navigate(item.route)
+              : navigation.navigate('DrawerStack', {
+                  screen: 'BottomNavigation',
+                  params: { screen: item.route },
+                })
           }
           style={{
             flexDirection: 'row',
@@ -73,7 +76,12 @@ const DrawerContent = () => {
             {item.children.map((subItem, subIndex) => (
               <TouchableOpacity
                 key={subIndex}
-                onPress={() => navigation.navigate(subItem.route)}
+                onPress={() =>
+                  navigation.navigate('DrawerStack', {
+                    screen: 'BottomNavigation',
+                    params: { screen: subItem.route },
+                  })
+                }
                 style={{
                   paddingVertical: 6,
                   flexDirection: 'row',

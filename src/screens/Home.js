@@ -283,7 +283,7 @@ const Home = ({ navigation }) => {
           </TouchableOpacity>
         </Appbar.Header>
 
-        <ScrollView contentContainerStyle={{ padding: 15 }}>
+        <ScrollView>
           {/* Pitch-aligned alerting & filters */}
           <Card style={styles.bannerCard}>
             <MaterialCommunityIcons
@@ -831,19 +831,23 @@ const Home = ({ navigation }) => {
         </ScrollView>
 
         {/* FAB */}
-        <FAB
+        {/* <FAB
           icon="plus"
           color={colors.white}
           style={styles.fab}
           onPress={() => {}}
-        />
+        /> */}
       </View>
     </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingHorizontal: 16,
+  },
 
   bannerCard: {
     flexDirection: 'row',
@@ -863,7 +867,6 @@ const styles = StyleSheet.create({
   searchInput: {
     backgroundColor: '#fff',
     borderRadius: 10,
-    paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -945,7 +948,6 @@ const styles = StyleSheet.create({
   },
   kycBadge: {
     borderRadius: 12,
-    paddingHorizontal: 10,
     paddingVertical: 4,
   },
   kycText: {

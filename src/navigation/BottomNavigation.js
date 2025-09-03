@@ -38,8 +38,6 @@ const BottomNavigation = () => {
           elevation: 4,
           position: 'absolute',
           bottom: 15,
-          left: 20,
-          right: 20,
         },
         tabBarLabelStyle: {
           fontSize: 12,

@@ -1,8 +1,5 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import BottomNavigation from './BottomNavigation';
-
-import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 import DrawerContent from '../screens/pages/Drawer';
