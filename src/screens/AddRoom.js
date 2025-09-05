@@ -1,94 +1,74 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View, Image } from 'react-native';
+import React, { useContext, useState, useEffect } from 'react';
 import {
-  Button,
-  Checkbox,
-  Divider,
-  HelperText,
-  Text,
-  TextInput,
-  useTheme,
-} from 'react-native-paper';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { CredentialsContext } from '../context/CredentialsContext';
+  ScrollView,
+  StyleSheet,
+  View,
+  Image,
+  Dimensions,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
+import { TextInput, useTheme } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+import GradientCard from '../components/GradientCard/GradientCard';
+import StyledTextInput from '../components/StyledTextInput/StyledTextInput';
+import StyledButton from '../components/StyledButton/StyledButton';
+import AnimatedChip from '../components/AnimatedChip/AnimatedChip';
+
+import Gap from '../components/Gap/Gap';
+
+import * as ImagePicker from 'react-native-image-picker';
+import LinearGradient from 'react-native-linear-gradient';
 import {
-  createRoom,
-  uploadDocument,
   createDocument,
+  uploadDocument,
+  createRoom,
   updateRoom,
 } from '../services/NetworkUtils';
-import StandardCard from '../components/StandardCard/StandardCard';
-import Gap from '../components/Gap/Gap';
-import colors from '../theme/color';
 import StandardText from '../components/StandardText/StandardText';
-import * as ImagePicker from 'react-native-image-picker';
-import { Picker } from '@react-native-picker/picker';
-import { TouchableOpacity } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemeContext } from '../context/ThemeContext';
+import { CredentialsContext } from '../context/CredentialsContext';
 
-const AddRoomSchema = Yup.object().shape({
-  roomName: Yup.string().required('Room name is required'),
-  areaType: Yup.string().required('Area type is required'),
-  floorNumber: Yup.number()
-    .typeError('Floor number must be a number')
-    .integer('Floor number must be an integer')
-    .required('Floor number is required'),
-  rentAmount: Yup.number()
-    .typeError('Rent must be a number')
-    .positive('Rent must be positive')
-    .required('Rent is required'),
-  securityAmount: Yup.number()
-    .typeError('Security amount must be a number')
-    .min(0, 'Security amount cannot be negative')
-    .required('Security amount is required'),
-  bedCount: Yup.number()
-    .typeError('Bed count must be a number')
-    .integer('Bed count must be an integer')
-    .min(0, 'Bed count cannot be negative')
-    .required('Bed count is required'),
-  bathroomCount: Yup.number()
-    .typeError('Bathroom count must be a number')
-    .integer('Bathroom count must be an integer')
-    .min(0, 'Bathroom count cannot be negative')
-    .required('Bathroom count is required'),
-  amenities: Yup.string(),
-  furnished: Yup.boolean(),
-  available: Yup.boolean(),
-  lastElectricityReading: Yup.number()
-    .typeError('Last electricity reading must be a number')
-    .min(0, 'Reading cannot be negative')
-    .required('Last electricity reading is required'),
-  lastElectricityReadingDate: Yup.string().required(
-    'Last electricity reading date is required',
-  ),
-});
+const { width } = Dimensions.get('window');
 
 const AddRoom = ({ navigation }) => {
-  const { credentials } = useContext(CredentialsContext);
   const { theme: mode } = useContext(ThemeContext);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Get params from navigation
+  const { credentials } = useContext(CredentialsContext);
+  const theme = useTheme();
   const route =
     navigation && navigation.getState
       ? navigation.getState().routes.find(r => r.name === 'AddRoom')
       : null;
-  const params =
-    route && route.params
-      ? route.params
-      : navigation && navigation.params
-      ? navigation.params
-      : {};
+
+  // Check if in edit mode
+  const params = route?.params;
   const isEdit = params && params.isEdit;
   const editRoom = params && params.room;
 
-  const [datePicker, setDatePicker] = useState({
-    show: false,
-    value: new Date(),
+  // Form state
+  const [formData, setFormData] = useState({
+    roomName: '',
+    areaType: '',
+    floorNumber: '',
+    rentAmount: '',
+    securityAmount: '',
+    bedCount: '',
+    bathroomCount: '',
+    amenities: '',
+    furnished: false,
+    available: true,
+    lastElectricityReading: '',
+    lastElectricityReadingDate: '',
   });
+
+  const [roomImages, setRoomImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Predefined options
+  const areaTypes = ['BHK', 'RK'];
 
   // Helper to format date as YYYY-MM-DD
   const formatDate = date => {
@@ -98,62 +78,118 @@ const AddRoom = ({ navigation }) => {
     return `${d.getFullYear()}-${month}-${day}`;
   };
 
-  // Open calendar for last electricity reading date
-  const openDatePicker = currentValue => {
-    setDatePicker({
-      show: true,
-      value: currentValue ? new Date(currentValue) : new Date(),
-    });
-  };
-
   // Handle date picker change
-  const onDateChange = (event, selectedDate, setFieldValue) => {
+  const onDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
     if (event.type === 'set' && selectedDate) {
-      setFieldValue('lastElectricityReadingDate', formatDate(selectedDate));
+      handleInputChange('lastElectricityReadingDate', formatDate(selectedDate));
     }
-    setDatePicker(prev => ({ ...prev, show: false }));
   };
 
-  const initialValues = {
-    roomName: isEdit && editRoom ? editRoom.name || '' : '',
-    areaType: isEdit && editRoom ? editRoom.areaType || '' : '',
-    floorNumber:
-      isEdit && editRoom ? editRoom.floorNumber?.toString() || '' : '',
-    rentAmount: isEdit && editRoom ? editRoom.rentAmount?.toString() || '' : '',
-    securityAmount:
-      isEdit && editRoom ? editRoom.securityAmount?.toString() || '' : '',
-    bedCount:
-      isEdit && editRoom
-        ? editRoom.totalBeds?.toString() || editRoom.bedCount?.toString() || ''
-        : '',
-    bathroomCount:
-      isEdit && editRoom ? editRoom.bathroomCount?.toString() || '' : '',
-    amenities: isEdit && editRoom ? editRoom.amenities || '' : '',
-    furnished: isEdit && editRoom ? !!editRoom.furnished : false,
-    available: isEdit && editRoom ? !!editRoom.isAvailable : true,
-    lastElectricityReading:
-      isEdit && editRoom
-        ? editRoom.lastElectricityReading?.toString() || ''
-        : '',
-    lastElectricityReadingDate:
-      isEdit && editRoom ? editRoom.lastElectricityReadingDate || '' : '',
+  // Open calendar for last electricity reading date
+  const openDatePicker = () => {
+    setShowDatePicker(true);
   };
 
-  const [roomImages, setRoomImages] = useState([]);
-
-  // Pre-fill images if editing
+  // Initialize form data for edit mode
   useEffect(() => {
-    if (
-      isEdit &&
-      editRoom &&
-      editRoom.image_document_id_list &&
-      Array.isArray(editRoom.image_document_id_list)
-    ) {
-      // You may want to fetch image URLs here if needed
-      // For now, just set empty array (or fetch URLs if you have API)
-      setRoomImages([]);
+    if (isEdit && editRoom) {
+      setFormData({
+        roomName: editRoom.roomName || editRoom.name || '',
+        areaType: editRoom.areaType || '',
+        floorNumber: editRoom.floorNumber?.toString() || '',
+        rentAmount: editRoom.rentAmount?.toString() || '',
+        securityAmount: editRoom.securityAmount?.toString() || '',
+        bedCount:
+          editRoom.bedCount?.toString() || editRoom.totalBeds?.toString() || '',
+        bathroomCount: editRoom.bathroomCount?.toString() || '',
+        amenities: editRoom.amenities?.join(', ') || '',
+        furnished: !!editRoom.furnished,
+        available: !!editRoom.available || !!editRoom.isAvailable,
+        lastElectricityReading:
+          editRoom.lastElectricityReading?.toString() || '',
+        lastElectricityReadingDate: editRoom.lastElectricityReadingDate || '',
+      });
+
+      if (
+        editRoom.image_document_id_list &&
+        Array.isArray(editRoom.image_document_id_list)
+      ) {
+        setRoomImages([]);
+      }
     }
   }, [isEdit, editRoom]);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // Clear error for this field
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: null,
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.roomName.trim()) newErrors.roomName = 'Room name is required';
+    if (!formData.areaType.trim()) newErrors.areaType = 'Area type is required';
+    if (!formData.floorNumber.trim())
+      newErrors.floorNumber = 'Floor number is required';
+    if (!formData.rentAmount.trim())
+      newErrors.rentAmount = 'Rent amount is required';
+    if (!formData.securityAmount.trim())
+      newErrors.securityAmount = 'Security amount is required';
+    if (!formData.bedCount.trim()) newErrors.bedCount = 'Bed count is required';
+    if (!formData.bathroomCount.trim())
+      newErrors.bathroomCount = 'Bathroom count is required';
+    if (!formData.lastElectricityReading.trim())
+      newErrors.lastElectricityReading = 'Last electricity reading is required';
+    if (!formData.lastElectricityReadingDate.trim())
+      newErrors.lastElectricityReadingDate =
+        'Last electricity reading date is required';
+
+    // Validate numeric fields
+    if (formData.floorNumber && isNaN(formData.floorNumber))
+      newErrors.floorNumber = 'Must be a number';
+    if (
+      formData.rentAmount &&
+      (isNaN(formData.rentAmount) || parseFloat(formData.rentAmount) <= 0)
+    )
+      newErrors.rentAmount = 'Must be a positive number';
+    if (
+      formData.securityAmount &&
+      (isNaN(formData.securityAmount) ||
+        parseFloat(formData.securityAmount) < 0)
+    )
+      newErrors.securityAmount = 'Cannot be negative';
+    if (
+      formData.bedCount &&
+      (isNaN(formData.bedCount) || parseInt(formData.bedCount, 10) < 0)
+    )
+      newErrors.bedCount = 'Must be a non-negative integer';
+    if (
+      formData.bathroomCount &&
+      (isNaN(formData.bathroomCount) ||
+        parseInt(formData.bathroomCount, 10) < 0)
+    )
+      newErrors.bathroomCount = 'Must be a non-negative integer';
+    if (
+      formData.lastElectricityReading &&
+      (isNaN(formData.lastElectricityReading) ||
+        parseFloat(formData.lastElectricityReading) < 0)
+    )
+      newErrors.lastElectricityReading = 'Cannot be negative';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const pickImages = () => {
     ImagePicker.launchImageLibrary(
@@ -161,494 +197,601 @@ const AddRoom = ({ navigation }) => {
         mediaType: 'photo',
         includeBase64: false,
         selectionLimit: 5,
+        quality: 0.8,
       },
       response => {
         if (response.assets && response.assets.length > 0) {
-          setRoomImages(
-            prev => [...prev, ...response.assets].slice(0, 5), // store full asset, not just uri
-          );
+          const newImages = response.assets.map((asset, index) => ({
+            ...asset,
+            id: Date.now() + index,
+            isExisting: false,
+          }));
+          setRoomImages(prev => [...prev, ...newImages].slice(0, 5));
         }
       },
     );
   };
 
-  const removeImage = index => {
-    setRoomImages(prev => prev.filter((_, i) => i !== index));
+  const removeImage = imageId => {
+    setRoomImages(prev => prev.filter(img => img.id !== imageId));
   };
 
-  const handleAddRoom = async (values, { resetForm }) => {
-    setLoading(true);
-    setError('');
+  const uploadNewImages = async () => {
+    const imageDocumentIds = [];
+    const newImages = roomImages.filter(img => !img.isExisting);
 
-    try {
-      const imageDocumentIds = [];
-      for (const image of roomImages) {
-        const imagedetails = {
+    for (const image of newImages) {
+      try {
+        const imageDetails = {
           file_name: image.fileName || image.uri.split('/').pop(),
           file_type: image.type,
           descriptor: 'Room Image',
           is_signature_required: false,
           doc_type: 'Room image',
         };
-        const room_document_res = await createDocument(
+
+        const documentResponse = await createDocument(
           credentials.accessToken,
           credentials.property_id,
-          imagedetails,
+          imageDetails,
         );
-        await uploadDocument(room_document_res.data.upload_url, image);
-        imageDocumentIds.push(room_document_res.data.document_id);
-      }
 
-      const roomData = {
-        ...values,
-        roomName: values.roomName.trim(),
-        rentAmount: parseFloat(values.rentAmount),
-        securityAmount: parseFloat(values.securityAmount, 10),
-        floorNumber: parseInt(values.floorNumber, 10),
-        bedCount: parseInt(values.bedCount, 10),
-        bathroomCount: parseInt(values.bathroomCount, 10),
-        lastElectricityReading: parseFloat(values.lastElectricityReading, 10),
-        image_document_id_list: imageDocumentIds,
+        await uploadDocument(documentResponse.data.upload_url, image);
+        imageDocumentIds.push(documentResponse.data.document_id);
+      } catch (error) {
+        console.error('Image upload error:', error);
+      }
+    }
+
+    return imageDocumentIds;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please fix the errors and try again.');
+      return;
+    }
+
+    const action = isEdit ? 'update' : 'create';
+    Alert.alert(
+      `${isEdit ? 'Update' : 'Create'} Room`,
+      `Are you sure you want to ${action} this room?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: isEdit ? 'Update' : 'Create', onPress: submitRoom },
+      ],
+    );
+  };
+
+  const submitRoom = async () => {
+    setLoading(true);
+
+    try {
+      // Upload new images
+      const newImageIds = await uploadNewImages();
+
+      // Prepare existing image IDs
+      const existingImageIds = roomImages
+        .filter(img => img.isExisting)
+        .map(img => img.documentId || img.id);
+
+      const payload = {
+        roomName: formData.roomName.trim(),
+        areaType: formData.areaType,
+        floorNumber: parseInt(formData.floorNumber, 10),
+        rentAmount: parseFloat(formData.rentAmount),
+        securityAmount: parseFloat(formData.securityAmount),
+        bedCount: parseInt(formData.bedCount, 10),
+        bathroomCount: parseInt(formData.bathroomCount, 10),
+        amenities: formData.amenities,
+        furnished: formData.furnished,
+        available: formData.available,
+        lastElectricityReading: parseFloat(formData.lastElectricityReading),
+        lastElectricityReadingDate: formData.lastElectricityReadingDate,
+        propertyId: credentials.property_id,
+        image_document_id_list: [...existingImageIds, ...newImageIds],
       };
 
-      if (isEdit && editRoom) {
-        await updateRoom(
-          credentials.accessToken,
-          credentials.property_id,
-          editRoom.id,
-          roomData,
-        );
+      if (isEdit) {
+        await updateRoom(credentials.accessToken, editRoom.id, payload);
+        Alert.alert('Success', 'Room updated successfully! 🎉');
       } else {
-        await createRoom(
-          credentials.accessToken,
-          credentials.property_id,
-          roomData,
-        );
+        await createRoom(credentials.accessToken, payload);
+        Alert.alert('Success', 'Room created successfully! 🎉');
       }
 
       resetForm();
-      navigation.goBack({ refresh: true });
-    } catch (err) {
-      console.error(
-        isEdit ? 'Failed to update room:' : 'Failed to add room:',
-        err,
+      navigation.goBack();
+    } catch (error) {
+      console.error('Room submission error:', error);
+      Alert.alert(
+        'Error',
+        `Failed to ${isEdit ? 'update' : 'create'} room. Please try again.`,
       );
-
-      let errorMessage = isEdit
-        ? 'Failed to update room. Please try again.'
-        : 'Failed to add room. Please try again.';
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage =
-          typeof err.response.data.message === 'string'
-            ? err.response.data.message
-            : err.response.data.message.join(', ');
-      }
-
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        <StandardCard>
-          <Text style={styles.heading}>
-            {isEdit ? 'Edit Room' : 'Add New Room'}
-          </Text>
-          <Divider style={styles.divider} />
+  const resetForm = () => {
+    setFormData({
+      roomName: '',
+      areaType: '',
+      floorNumber: '',
+      rentAmount: '',
+      securityAmount: '',
+      bedCount: '',
+      bathroomCount: '',
+      amenities: '',
+      furnished: false,
+      available: true,
+      lastElectricityReading: '',
+      lastElectricityReadingDate: '',
+    });
+    setRoomImages([]);
+    setErrors({});
+  };
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <Formik
-            initialValues={initialValues}
-            validationSchema={AddRoomSchema}
-            onSubmit={handleAddRoom}
-          >
-            {({
-              handleChange,
-              handleBlur,
-              handleSubmit,
-              setFieldValue,
-              values,
-              errors,
-              touched,
-            }) => (
-              <View>
-                <TextInput
-                  label="Room Name *"
-                  value={values.roomName}
-                  onChangeText={handleChange('roomName')}
-                  onBlur={handleBlur('roomName')}
-                  error={touched.roomName && errors.roomName}
-                  style={styles.input}
-                  mode="outlined"
-                />
-                {touched.roomName && errors.roomName && (
-                  <HelperText type="error">{errors.roomName}</HelperText>
-                )}
-
-                <Text style={styles.areaTypeLabel}>Area Type *</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={values.areaType}
-                    onValueChange={value => setFieldValue('areaType', value)}
-                    style={[
-                      styles.picker,
-                      { color: mode === 'dark' ? '#e0e0e0' : '#000' },
-                    ]}
-                    dropdownIconColor={mode === 'dark' ? '#e0e0e0' : '#000'}
-                  >
-                    <Picker.Item
-                      label="Select Area Type"
-                      value=""
-                      color={mode === 'dark' ? '#b0b0b0' : '#888'}
-                    />
-                    <Picker.Item
-                      label="BHK"
-                      value="BHK"
-                      color={mode === 'dark' ? '#e0e0e0' : '#000'}
-                    />
-                    <Picker.Item
-                      label="RK"
-                      value="RK"
-                      color={mode === 'dark' ? '#e0e0e0' : '#000'}
-                    />
-                  </Picker>
-                </View>
-                {touched.areaType && errors.areaType && (
-                  <HelperText type="error">{errors.areaType}</HelperText>
-                )}
-
-                <TextInput
-                  label="Floor Number *"
-                  value={values.floorNumber.toString()}
-                  onChangeText={handleChange('floorNumber')}
-                  onBlur={handleBlur('floorNumber')}
-                  error={touched.floorNumber && errors.floorNumber}
-                  keyboardType="numeric"
-                  style={styles.input}
-                  mode="outlined"
-                />
-                {touched.floorNumber && errors.floorNumber && (
-                  <HelperText type="error">{errors.floorNumber}</HelperText>
-                )}
-
-                <TextInput
-                  label="Rent (INR) *"
-                  value={values.rentAmount.toString()}
-                  onChangeText={handleChange('rentAmount')}
-                  onBlur={handleBlur('rentAmount')}
-                  error={touched.rentAmount && errors.rentAmount}
-                  keyboardType="numeric"
-                  style={styles.input}
-                  mode="outlined"
-                />
-                {touched.rentAmount && errors.rentAmount && (
-                  <HelperText type="error">{errors.rentAmount}</HelperText>
-                )}
-
-                <TextInput
-                  label="Security Amount (INR) *"
-                  value={values.securityAmount.toString()}
-                  onChangeText={handleChange('securityAmount')}
-                  onBlur={handleBlur('securityAmount')}
-                  error={touched.securityAmount && errors.securityAmount}
-                  keyboardType="numeric"
-                  style={styles.input}
-                  mode="outlined"
-                />
-                {touched.securityAmount && errors.securityAmount && (
-                  <HelperText type="error">{errors.securityAmount}</HelperText>
-                )}
-
-                <TextInput
-                  label="Bed Count *"
-                  value={values.bedCount.toString()}
-                  onChangeText={handleChange('bedCount')}
-                  onBlur={handleBlur('bedCount')}
-                  error={touched.bedCount && errors.bedCount}
-                  keyboardType="numeric"
-                  style={styles.input}
-                  mode="outlined"
-                />
-                {touched.bedCount && errors.bedCount && (
-                  <HelperText type="error">{errors.bedCount}</HelperText>
-                )}
-
-                <TextInput
-                  label="Bathroom Count *"
-                  value={values.bathroomCount.toString()}
-                  onChangeText={handleChange('bathroomCount')}
-                  onBlur={handleBlur('bathroomCount')}
-                  error={touched.bathroomCount && errors.bathroomCount}
-                  keyboardType="numeric"
-                  style={styles.input}
-                  mode="outlined"
-                />
-                {touched.bathroomCount && errors.bathroomCount && (
-                  <HelperText type="error">{errors.bathroomCount}</HelperText>
-                )}
-
-                <TextInput
-                  label="Amenities"
-                  value={values.amenities}
-                  onChangeText={handleChange('amenities')}
-                  onBlur={handleBlur('amenities')}
-                  placeholder="e.g., WiFi, AC, Water Heater (separate by commas)"
-                  style={styles.input}
-                  mode="outlined"
-                />
-
-                <View style={styles.checkboxContainer}>
-                  <Checkbox
-                    status={values.furnished ? 'checked' : 'unchecked'}
-                    onPress={() =>
-                      setFieldValue('furnished', !values.furnished)
-                    }
-                    color={colors.primary}
-                  />
-                  <Text style={styles.checkboxLabel}>Furnished</Text>
-                </View>
-
-                <View style={styles.checkboxContainer}>
-                  <Checkbox
-                    status={values.available ? 'checked' : 'unchecked'}
-                    onPress={() =>
-                      setFieldValue('available', !values.available)
-                    }
-                    color={colors.primary}
-                  />
-                  <Text style={styles.checkboxLabel}>Available</Text>
-                </View>
-
-                <TextInput
-                  label="Last Electricity Reading *"
-                  value={values.lastElectricityReading.toString()}
-                  onChangeText={handleChange('lastElectricityReading')}
-                  onBlur={handleBlur('lastElectricityReading')}
-                  error={
-                    touched.lastElectricityReading &&
-                    errors.lastElectricityReading
-                  }
-                  keyboardType="numeric"
-                  style={styles.input}
-                  mode="outlined"
-                />
-                {touched.lastElectricityReading &&
-                  errors.lastElectricityReading && (
-                    <HelperText type="error">
-                      {errors.lastElectricityReading}
-                    </HelperText>
-                  )}
-                <TouchableOpacity onPress={() => openDatePicker('addRentOn')}>
-                  <TextInput
-                    label="Last Electricity Reading Date * (YYYY-MM-DD)"
-                    value={values.lastElectricityReadingDate}
-                    onChangeText={handleChange('lastElectricityReadingDate')}
-                    onBlur={handleBlur('lastElectricityReadingDate')}
-                    error={
-                      touched.lastElectricityReadingDate &&
-                      errors.lastElectricityReadingDate
-                    }
-                    style={styles.input}
-                    mode="outlined"
-                    placeholder="e.g. 2025-08-29"
-                    editable={false}
-                  />
-                  {/* Open calendar on touch */}
-                  <View style={styles.absoluteFill}>
-                    <TouchableOpacity
-                      style={styles.flexOne}
-                      activeOpacity={1}
-                      onPress={() =>
-                        openDatePicker(values.lastElectricityReadingDate)
-                      }
-                    >
-                      <View style={styles.flexOne} />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-                {datePicker.show && (
-                  <DateTimePicker
-                    value={datePicker.value}
-                    mode="date"
-                    display="default"
-                    onChange={(event, selectedDate) =>
-                      onDateChange(event, selectedDate, setFieldValue)
-                    }
-                  />
-                )}
-                {touched.lastElectricityReadingDate &&
-                  errors.lastElectricityReadingDate && (
-                    <HelperText type="error">
-                      {errors.lastElectricityReadingDate}
-                    </HelperText>
-                  )}
-
-                <Gap size="sm" />
-                <StandardText>Room Images (up to 5)</StandardText>
-                <View style={styles.imagePreviewContainer}>
-                  {roomImages.map((img, idx) => (
-                    <View key={idx} style={styles.roomImageWrapper}>
-                      <Image
-                        source={{ uri: img.uri }}
-                        style={styles.roomImage}
-                      />
-                      <Button
-                        icon="close"
-                        compact
-                        style={styles.removeImageButton}
-                        onPress={() => removeImage(idx)}
-                      />
-                    </View>
-                  ))}
-                </View>
-                <Button
-                  icon="image"
-                  mode="outlined"
-                  onPress={pickImages}
-                  style={styles.uploadImageButton}
-                >
-                  {roomImages.length > 0 ? 'Change Images' : 'Upload Images'}
-                </Button>
-
-                <Button
-                  mode="contained"
-                  onPress={handleSubmit}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.button}
-                >
-                  {isEdit ? 'Update Room' : 'Add Room'}
-                </Button>
-
-                <Button
-                  mode="outlined"
-                  onPress={() => navigation.goBack()}
-                  style={styles.button}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
-              </View>
-            )}
-          </Formik>
-        </StandardCard>
-      </ScrollView>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginTop: 25,
-  },
-  scrollView: {
-    padding: 16,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  divider: {
-    marginBottom: 16,
-  },
-  input: {
-    marginBottom: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  halfInput: {
-    width: '48%',
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  checkboxLabel: {
-    marginLeft: 8,
-  },
-  button: {
-    marginVertical: 8,
-  },
-  errorText: {
-    color: '#D32F2F',
-    marginBottom: 16,
-  },
-  imagePreviewContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    imagePreviewContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      marginBottom: 10,
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: 20,
+      paddingTop: 10,
     },
-    imageWrapper: {
+    headerContainer: {
       position: 'relative',
-      width: '48%',
-      marginBottom: 10,
+      alignItems: 'center',
+      marginBottom: 24,
     },
-    roomImageWrapper: {
-      position: 'relative',
-      marginRight: 8,
-      marginBottom: 8,
-    },
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    padding: 2,
-    removeImageButton: {
+    closeButton: {
       position: 'absolute',
       top: -10,
       right: -10,
-      zIndex: 1,
-      padding: 2,
+      zIndex: 999,
+      backgroundColor: theme.colors.errorContainer,
       borderRadius: 20,
     },
-  },
-  absoluteFill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  picker: {
-    height: 50,
-    width: '100%',
-  },
-  areaTypeLabel: {
-    marginBottom: 4,
-  },
-  flexOne: {
-    flex: 1,
-  },
-  uploadImageButton: {
-    marginBottom: 10,
-  },
-  roomImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#000',
-    borderRadius: 4,
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-});
+    titleContainer: {
+      alignItems: 'center',
+      paddingVertical: 16,
+    },
+    gradientTitle: {
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 25,
+      alignItems: 'center',
+    },
+    sectionTitle: {
+      marginBottom: 12,
+      marginTop: 16,
+      color: theme.colors.primary,
+    },
+    formRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginBottom: 8,
+    },
+    formColumn: {
+      flex: 1,
+    },
+    chipContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginVertical: 12,
+    },
+    amenitiesContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 8,
+      marginBottom: 16,
+    },
+    amenityInputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 12,
+      gap: 8,
+    },
+    amenityInput: {
+      flex: 1,
+    },
+    imageGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+      marginVertical: 16,
+    },
+    imageContainer: {
+      position: 'relative',
+    },
+    roomImage: {
+      width: (width - 80) / 3,
+      height: (width - 80) / 3,
+      borderRadius: 12,
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    removeImageButton: {
+      position: 'absolute',
+      top: -8,
+      right: -8,
+      backgroundColor: theme.colors.errorContainer,
+      borderRadius: 12,
+      width: 24,
+      height: 24,
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1,
+    },
+    imageUploadArea: {
+      borderWidth: 2,
+      borderColor: theme.colors.outline,
+      borderStyle: 'dashed',
+      borderRadius: 12,
+      padding: 20,
+      alignItems: 'center',
+      backgroundColor: theme.colors.surfaceVariant,
+      marginVertical: 16,
+    },
+    submitContainer: {
+      marginTop: 24,
+      marginBottom: 32,
+      gap: 12,
+    },
+    fieldLabel: {
+      marginBottom: 8,
+      color: theme.colors.onSurface,
+    },
+    errorText: {
+      color: theme.colors.error,
+      marginTop: 4,
+    },
+    halfWidth: {
+      width: '48%',
+    },
+    imageUploadText: {
+      color: theme.colors.onSurfaceVariant,
+      textAlign: 'center',
+    },
+  });
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <View style={styles.titleContainer}>
+          <LinearGradient
+            colors={[theme.colors.primary, theme.colors.secondary]}
+            style={styles.gradientTitle}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <StandardText
+              size="xl"
+              fontWeight="bold"
+              style={{ color: theme.colors.onPrimary }}
+            >
+              {isEdit ? '✏️ Edit Room' : '✨ Add New Room'}
+            </StandardText>
+          </LinearGradient>
+        </View>
+      </View>
+
+      <GradientCard
+        gradient={true}
+        gradientColors={[
+          mode === 'dark' ? '#2a2a2a' : '#ffffff',
+          mode === 'dark' ? '#1f1f1f' : '#f8f9fa',
+        ]}
+      >
+        {/* Basic Information */}
+        <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+          🏠 Basic Information
+        </StandardText>
+
+        <View style={styles.formRow}>
+          <View style={styles.formColumn}>
+            <StyledTextInput
+              label="Room Name *"
+              value={formData.roomName}
+              onChangeText={value => handleInputChange('roomName', value)}
+              mode="outlined"
+              left={<TextInput.Icon icon="home" />}
+              placeholder="e.g., Deluxe Room A"
+              error={errors.roomName}
+            />
+          </View>
+
+          <View style={styles.formColumn}>
+            <StandardText size="sm" fontWeight="600" style={styles.fieldLabel}>
+              Area Type *
+            </StandardText>
+            <View style={styles.chipContainer}>
+              {areaTypes.map(type => (
+                <AnimatedChip
+                  key={type}
+                  label={type}
+                  selected={formData.areaType === type}
+                  onPress={() => handleInputChange('areaType', type)}
+                  size="medium"
+                />
+              ))}
+            </View>
+            {errors.areaType && (
+              <StandardText size="xs" style={styles.errorText}>
+                {errors.areaType}
+              </StandardText>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.formRow}>
+          <View style={styles.formColumn}>
+            <StyledTextInput
+              label="Floor Number *"
+              value={formData.floorNumber}
+              onChangeText={value => handleInputChange('floorNumber', value)}
+              mode="outlined"
+              keyboardType="numeric"
+              left={<TextInput.Icon icon="stairs" />}
+              placeholder="1"
+              error={errors.floorNumber}
+            />
+          </View>
+
+          <View style={styles.formColumn}>
+            <StyledTextInput
+              label="Number of Beds *"
+              value={formData.bedCount}
+              onChangeText={value => handleInputChange('bedCount', value)}
+              placeholder="2"
+              mode="outlined"
+              keyboardType="numeric"
+              left={<TextInput.Icon icon="bed" />}
+              error={errors.bedCount}
+            />
+          </View>
+        </View>
+
+        <StyledTextInput
+          label="Number of Bathrooms *"
+          value={formData.bathroomCount}
+          onChangeText={value => handleInputChange('bathroomCount', value)}
+          mode="outlined"
+          keyboardType="numeric"
+          left={<TextInput.Icon icon="shower" />}
+          placeholder="1"
+          error={errors.bathroomCount}
+          containerStyle={styles.halfWidth}
+        />
+
+        {/* Pricing Information */}
+        <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+          💰 Pricing Details
+        </StandardText>
+
+        <View style={styles.formRow}>
+          <View style={styles.formColumn}>
+            <StyledTextInput
+              label="Rent Amount *"
+              value={formData.rentAmount}
+              onChangeText={value => handleInputChange('rentAmount', value)}
+              mode="outlined"
+              keyboardType="numeric"
+              left={<TextInput.Icon icon="currency-inr" />}
+              placeholder="5000"
+              error={errors.rentAmount}
+            />
+          </View>
+
+          <View style={styles.formColumn}>
+            <StyledTextInput
+              label="Security Amount *"
+              value={formData.securityAmount}
+              onChangeText={value => handleInputChange('securityAmount', value)}
+              mode="outlined"
+              keyboardType="numeric"
+              left={<TextInput.Icon icon="shield-check" />}
+              placeholder="10000"
+              error={errors.securityAmount}
+            />
+          </View>
+        </View>
+
+        {/* Room Features */}
+        <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+          🛏️ Room Features
+        </StandardText>
+
+        <StyledTextInput
+          label="Amenities"
+          value={formData.amenities}
+          onChangeText={value => handleInputChange('amenities', value)}
+          mode="outlined"
+          left={<TextInput.Icon icon="home-heart" />}
+          placeholder="AC, WiFi, Geyser (separate by commas)"
+          error={errors.amenities}
+        />
+
+        <View style={styles.formRow}>
+          <View style={styles.formColumn}>
+            <StandardText size="sm" fontWeight="600" style={styles.fieldLabel}>
+              Furnished
+            </StandardText>
+            <View style={styles.chipContainer}>
+              <AnimatedChip
+                label="Yes"
+                selected={formData.furnished === true}
+                onPress={() => handleInputChange('furnished', true)}
+                size="medium"
+              />
+              <AnimatedChip
+                label="No"
+                selected={formData.furnished === false}
+                onPress={() => handleInputChange('furnished', false)}
+                size="medium"
+              />
+            </View>
+          </View>
+
+          <View style={styles.formColumn}>
+            <StandardText size="sm" fontWeight="600" style={styles.fieldLabel}>
+              Available
+            </StandardText>
+            <View style={styles.chipContainer}>
+              <AnimatedChip
+                label="Yes"
+                selected={formData.available === true}
+                onPress={() => handleInputChange('available', true)}
+                size="medium"
+              />
+              <AnimatedChip
+                label="No"
+                selected={formData.available === false}
+                onPress={() => handleInputChange('available', false)}
+                size="medium"
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Electricity Details */}
+        <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+          ⚡ Electricity Details
+        </StandardText>
+
+        <View style={styles.formRow}>
+          <View style={styles.formColumn}>
+            <StyledTextInput
+              label="Last Electricity Reading *"
+              value={formData.lastElectricityReading}
+              onChangeText={value =>
+                handleInputChange('lastElectricityReading', value)
+              }
+              mode="outlined"
+              keyboardType="numeric"
+              left={<TextInput.Icon icon="gauge" />}
+              placeholder="1250"
+              error={errors.lastElectricityReading}
+            />
+          </View>
+
+          <View style={styles.formColumn}>
+            <TouchableOpacity onPress={openDatePicker}>
+              <StyledTextInput
+                label="Reading Date *"
+                value={formData.lastElectricityReadingDate}
+                mode="outlined"
+                left={<TextInput.Icon icon="calendar" />}
+                placeholder="YYYY-MM-DD"
+                error={errors.lastElectricityReadingDate}
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={
+              formData.lastElectricityReadingDate
+                ? new Date(formData.lastElectricityReadingDate)
+                : new Date()
+            }
+            mode="date"
+            display="default"
+            onChange={onDateChange}
+          />
+        )}
+
+        {/* Room Images */}
+        <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+          📸 Room Images ({roomImages.length}/5)
+        </StandardText>
+
+        {roomImages.length > 0 ? (
+          <View style={styles.imageGrid}>
+            {roomImages.map(img => (
+              <View key={img.id} style={styles.imageContainer}>
+                <Image
+                  source={{ uri: img.uri }}
+                  style={styles.roomImage}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => removeImage(img.id)}
+                >
+                  <StandardText
+                    size="xs"
+                    fontWeight="bold"
+                    style={{ color: theme.colors.onErrorContainer }}
+                  >
+                    ×
+                  </StandardText>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.imageUploadArea} onPress={pickImages}>
+            <StandardText size="md" style={styles.imageUploadText}>
+              📷{'\n'}Tap to add room images{'\n'}(up to 5 images)
+            </StandardText>
+          </TouchableOpacity>
+        )}
+
+        <StyledButton
+          title={roomImages.length > 0 ? 'Add More Images' : 'Upload Images'}
+          icon="camera-plus"
+          variant="outlined"
+          size="medium"
+          onPress={pickImages}
+          fullWidth={true}
+          disabled={roomImages.length >= 5}
+        />
+
+        {/* Submit Buttons */}
+        <View style={styles.submitContainer}>
+          <StyledButton
+            title={
+              loading
+                ? isEdit
+                  ? 'Updating...'
+                  : 'Creating...'
+                : isEdit
+                ? 'Update Room'
+                : 'Create Room'
+            }
+            icon={
+              loading ? 'loading' : isEdit ? 'content-save-edit' : 'plus-circle'
+            }
+            variant="primary"
+            size="large"
+            onPress={handleSubmit}
+            disabled={loading}
+            loading={loading}
+            fullWidth={true}
+          />
+
+          <StyledButton
+            title="Cancel"
+            icon="close"
+            variant="outlined"
+            size="medium"
+            onPress={() => {
+              if (!loading) navigation.goBack();
+            }}
+            disabled={loading}
+            fullWidth={true}
+          />
+        </View>
+      </GradientCard>
+
+      <Gap size="lg" />
+    </ScrollView>
+  );
+};
 
 export default AddRoom;
