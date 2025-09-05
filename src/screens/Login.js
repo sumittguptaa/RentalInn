@@ -21,11 +21,10 @@ import StandardText from '../components/StandardText/StandardText';
 
 // Services and utilities
 import { handleUserLogin } from '../services/NetworkUtils';
-import {
-  StorageHelper,
-  AnalyticsHelper,
-  PerformanceHelper,
-} from '../navigation/helpers';
+import helpers from '../navigation/helpers';
+
+const { StorageHelper, AnalyticsHelper, PerformanceHelper } = helpers;
+
 import {
   STORAGE_KEYS,
   SUCCESS_MESSAGES,
@@ -134,46 +133,66 @@ const Login = ({ navigation }) => {
 
       // Call login API
       const response = await handleUserLogin({ email, password });
-      const { user, accessToken, refreshToken } = response;
+
+      // Check if login was successful
+      if (!response.success) {
+        throw new Error(response.error || 'Login failed');
+      }
+
+      // Extract data from API response
+      const { user, accessToken, refreshToken } = response.data || {};
+
+      // Validate required fields
+      if (!user || !accessToken) {
+        throw new Error('Invalid login response: missing user data or token');
+      }
 
       // Store user data securely
-      const success = await StorageHelper.storeUserData(user, accessToken);
+      const storageResult = await StorageHelper.storeUserData(
+        user,
+        accessToken,
+        refreshToken,
+      );
 
-      if (success) {
-        // Store refresh token if available
-        if (refreshToken) {
-          await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-        }
-
-        // Handle remember me functionality
-        if (rememberMe) {
-          await AsyncStorage.multiSet([
-            ['savedEmail', email],
-            ['rememberMe', 'true'],
-          ]);
-        } else {
-          await AsyncStorage.multiRemove(['savedEmail', 'rememberMe']);
-        }
-
-        // Update credentials context
-        setCredentials({
-          ...user,
-          token: accessToken,
-        });
-
-        // Track successful login
-        AnalyticsHelper.trackEvent('login_success', {
-          email,
-          loginMethod: 'email_password',
-        });
-
-        // Optional: Show success message briefly
-        setErrorMessage('');
-
-        // Navigation will be handled automatically by RootStack
-      } else {
-        throw new Error('Failed to store user data');
+      if (!storageResult.success) {
+        throw new Error(storageResult.error || 'Failed to store user data');
       }
+
+      // Store refresh token if available (Note: already handled in storeUserData, but keeping for extra security)
+      if (refreshToken) {
+        await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+      }
+
+      // Handle remember me functionality
+      if (rememberMe) {
+        await AsyncStorage.multiSet([
+          ['savedEmail', email],
+          ['rememberMe', 'true'],
+        ]);
+      } else {
+        await AsyncStorage.multiRemove(['savedEmail', 'rememberMe']);
+      }
+
+      // Update credentials context with required email field and both token formats for compatibility
+      const credentialsToSet = {
+        ...user,
+        email: user.email || email, // Ensure email is present for CredentialsContext
+        token: accessToken, // For internal storage/helpers
+        accessToken: accessToken, // For API calls that expect accessToken
+      };
+
+      await setCredentials(credentialsToSet);
+
+      // Track successful login
+      AnalyticsHelper.trackEvent('login_success', {
+        email,
+        loginMethod: 'email_password',
+      });
+
+      // Optional: Show success message briefly
+      setErrorMessage('');
+
+      // Navigation will be handled automatically by RootStack
     } catch (error) {
       console.error('Login Error:', error);
 

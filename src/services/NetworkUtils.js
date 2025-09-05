@@ -1,327 +1,517 @@
 import axios from 'axios';
-import {FINANCY_ENDPOINT_URL} from '../../config';
+import { FINANCY_ENDPOINT_URL } from '../../config';
+import helpers from '../navigation/helpers';
+import { ERROR_MESSAGES } from '../navigation/constants';
 
+const { ErrorHelper } = helpers;
+
+// Debug log to ensure ErrorHelper is imported correctly
+if (__DEV__) {
+  console.log('NetworkUtils: ErrorHelper imported:', !!ErrorHelper);
+}
+
+// Create axios instance with default configuration
+const apiClient = axios.create({
+  baseURL: FINANCY_ENDPOINT_URL,
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor for adding auth token and logging
+apiClient.interceptors.request.use(
+  config => {
+    if (__DEV__) {
+      console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
+    return config;
+  },
+  error => {
+    ErrorHelper.logError(error, 'API_REQUEST_ERROR');
+    return Promise.reject(error);
+  },
+);
+
+// Response interceptor for error handling and logging
+apiClient.interceptors.response.use(
+  response => {
+    if (__DEV__) {
+      console.log(`API Response: ${response.status} ${response.config.url}`);
+    }
+    return response;
+  },
+  error => {
+    const errorMessage = getErrorMessage(error);
+
+    // Enhanced error logging for debugging
+    if (__DEV__) {
+      console.error('API Error Details:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        isNetworkError: !error.response,
+      });
+    }
+
+    ErrorHelper.logError(
+      error,
+      `API_RESPONSE_ERROR: ${error.config?.method} ${error.config?.url}`,
+    );
+
+    // Transform axios error to our standard format
+    const transformedError = {
+      ...error,
+      message: errorMessage,
+      isNetworkError: !error.response,
+      statusCode: error.response?.status,
+      data: error.response?.data,
+    };
+
+    return Promise.reject(transformedError);
+  },
+);
+
+// Helper function to get user-friendly error messages
+const getErrorMessage = error => {
+  if (!error.response) {
+    return ERROR_MESSAGES.NETWORK_ERROR;
+  }
+
+  const { status, data } = error.response;
+
+  switch (status) {
+    case 400:
+      return data?.message || ERROR_MESSAGES.VALIDATION_ERROR;
+    case 401:
+      return ERROR_MESSAGES.UNAUTHORIZED;
+    case 403:
+      return ERROR_MESSAGES.PERMISSION_DENIED;
+    case 404:
+      return 'Requested resource not found.';
+    case 409:
+      return data?.message || 'Resource already exists.';
+    case 422:
+      return data?.message || ERROR_MESSAGES.VALIDATION_ERROR;
+    case 429:
+      return 'Too many requests. Please try again later.';
+    case 500:
+      return ERROR_MESSAGES.SERVER_ERROR;
+    case 503:
+      return ERROR_MESSAGES.SERVICE_UNAVAILABLE;
+    default:
+      return data?.message || ERROR_MESSAGES.UNKNOWN_ERROR;
+  }
+};
+
+// Helper function to create authorization headers
+const getAuthHeaders = accessToken => {
+  if (__DEV__) {
+    console.log(
+      'Auth token provided:',
+      !!accessToken,
+      accessToken ? 'Token present' : 'No token',
+    );
+  }
+
+  if (!accessToken) {
+    console.warn('No access token provided for API request');
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${accessToken}`,
+  };
+};
+
+// Helper function to handle API responses consistently
+const handleApiResponse = async (apiCall, operation = 'API_OPERATION') => {
+  try {
+    const response = await apiCall();
+    return {
+      success: true,
+      data: response.data,
+      status: response.status,
+      error: null,
+    };
+  } catch (error) {
+    ErrorHelper.logError(error, operation);
+    return {
+      success: false,
+      data: null,
+      status: error.statusCode || 500,
+      error: error.message || ERROR_MESSAGES.UNKNOWN_ERROR,
+      isNetworkError: error.isNetworkError || false,
+    };
+  }
+};
+
+/**
+ * Authentication API calls
+ */
 export const handleUserSignup = async credentials => {
-  const url = `${FINANCY_ENDPOINT_URL}/auth/register`;
-  const signup_res = await axios.post(url, credentials);
-
-  return signup_res.data;
+  return handleApiResponse(
+    () => apiClient.post('/auth/register', credentials),
+    'USER_SIGNUP',
+  );
 };
 
 export const handleUserLogin = async credentials => {
-  const url = `${FINANCY_ENDPOINT_URL}/auth/login`;
-
-  const login_res = await axios.post(url, credentials);
-
-  return login_res.data;
+  return handleApiResponse(
+    () => apiClient.post('/auth/login', credentials),
+    'USER_LOGIN',
+  );
 };
 
 export const getOwnerDetails = async credentials => {
-  const url = `${FINANCY_ENDPOINT_URL}/users/${credentials.id}`;
-
-  const owner_res = await axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${credentials.accessToken}`,
-    },
-  });
-
-  return owner_res.data;
-};
-
-export const analyticsDashBoard = (accessToken, startDate, endDate) => {
-  let url = `${FINANCY_ENDPOINT_URL}/analytics/dashboard`;
-
-  if (!!startDate && !!endDate) {
-    url += `?startDate=${startDate}&endDate=${endDate}`;
+  if (__DEV__) {
+    console.log('getOwnerDetails called with credentials:', {
+      id: credentials?.id,
+      hasToken: !!credentials?.token,
+      hasAccessToken: !!credentials?.accessToken,
+      keys: Object.keys(credentials || {}),
+    });
   }
 
-  const analytics_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return analytics_res;
+  return handleApiResponse(
+    () =>
+      apiClient.get(`/users/${credentials.id}`, {
+        headers: getAuthHeaders(credentials.token || credentials.accessToken),
+      }),
+    'GET_OWNER_DETAILS',
+  );
 };
 
-export const analyticsPerformance = (accessToken, startDate, endDate) => {
-  let url = `${FINANCY_ENDPOINT_URL}/analytics/performance`;
+/**
+ * Analytics API calls
+ */
+export const analyticsDashBoard = async (accessToken, startDate, endDate) => {
+  let endpoint = '/analytics/dashboard';
 
-  if (!!startDate && !!endDate) {
-    url += `?startDate=${startDate}&endDate=${endDate}`;
+  if (startDate && endDate) {
+    endpoint += `?startDate=${startDate}&endDate=${endDate}`;
   }
 
-  const performance_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return performance_res;
+  return handleApiResponse(
+    () =>
+      apiClient.get(endpoint, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'ANALYTICS_DASHBOARD',
+  );
 };
 
-export const propertyRooms = (accessToken, propertyId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/properties/${propertyId}/rooms`;
+export const analyticsPerformance = async (accessToken, startDate, endDate) => {
+  let endpoint = '/analytics/performance';
 
-  const rooms_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  if (startDate && endDate) {
+    endpoint += `?startDate=${startDate}&endDate=${endDate}`;
+  }
 
-  return rooms_res;
+  return handleApiResponse(
+    () =>
+      apiClient.get(endpoint, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'ANALYTICS_PERFORMANCE',
+  );
+};
+
+/**
+ * Room Management API calls
+ */
+export const propertyRooms = async (accessToken, propertyId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.get(`/properties/${propertyId}/rooms`, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'GET_PROPERTY_ROOMS',
+  );
 };
 
 export const createRoom = async (accessToken, propertyId, roomData) => {
-  const url = `${FINANCY_ENDPOINT_URL}/properties/${propertyId}/rooms`;
-
-  const create_room_res = await axios.post(url, roomData, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return create_room_res;
-};
-
-export const updateRoom = (accessToken, propertyId, roomId, roomData) => {
-  const url = `${FINANCY_ENDPOINT_URL}/properties/${propertyId}/rooms/${roomId}`;
-
-  const update_room_res = axios.put(url, roomData, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return update_room_res;
-};
-
-export const deleteRoom = (accessToken, propertyId, roomId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/properties/${propertyId}/rooms/${roomId}`;
-
-  const delete_room_res = axios.delete(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return delete_room_res;
-};
-
-export const addTenant = (accessToken, propertyId, tenantData) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tenants`;
-
-  const add_tenant_res = axios.post(
-    url,
-    {...tenantData, propertyId: propertyId},
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
+  return handleApiResponse(
+    () =>
+      apiClient.post(`/properties/${propertyId}/rooms`, roomData, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'CREATE_ROOM',
   );
-
-  return add_tenant_res;
 };
 
-export const fetchTenants = (accessToken, propertyId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tenants`;
+export const updateRoom = async (accessToken, propertyId, roomId, roomData) => {
+  return handleApiResponse(
+    () =>
+      apiClient.put(`/properties/${propertyId}/rooms/${roomId}`, roomData, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'UPDATE_ROOM',
+  );
+};
 
-  const tenants_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    params: {
-      propertyId: propertyId.toString(),
-    },
+export const deleteRoom = async (accessToken, propertyId, roomId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.delete(`/properties/${propertyId}/rooms/${roomId}`, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'DELETE_ROOM',
+  );
+};
+
+/**
+ * Tenant Management API calls
+ */
+export const addTenant = async (accessToken, propertyId, tenantData) => {
+  return handleApiResponse(
+    () =>
+      apiClient.post(
+        '/tenants',
+        {
+          ...tenantData,
+          propertyId: propertyId,
+        },
+        {
+          headers: getAuthHeaders(accessToken),
+        },
+      ),
+    'ADD_TENANT',
+  );
+};
+
+export const fetchTenants = async (accessToken, propertyId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.get('/tenants', {
+        headers: getAuthHeaders(accessToken),
+        params: {
+          propertyId: propertyId.toString(),
+        },
+      }),
+    'FETCH_TENANTS',
+  );
+};
+
+export const getTenants = async (accessToken, propertyId, roomId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.get(`/tenants/property/${propertyId}/room/${roomId}`, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'x-property-id': propertyId,
+        },
+      }),
+    'GET_TENANTS_BY_ROOM',
+  );
+};
+
+export const putTenantOnNotice = async (accessToken, tenantId, noticeData) => {
+  return handleApiResponse(
+    () =>
+      apiClient.patch(`/tenants/${tenantId}/notice`, noticeData, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'PUT_TENANT_ON_NOTICE',
+  );
+};
+
+export const deleteTenant = async (accessToken, tenantId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.delete(`/tenants/${tenantId}`, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'DELETE_TENANT',
+  );
+};
+
+export const getDocument = async (accessToken, propertyId, documentId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.get(`/documents/${documentId}`, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'x-property-id': propertyId,
+        },
+      }),
+    'GET_DOCUMENT',
+  );
+};
+
+/**
+ * Ticket Management API calls
+ */
+export const createTicket = async (accessToken, ticketData) => {
+  return handleApiResponse(
+    () =>
+      apiClient.post('/tickets', ticketData, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'CREATE_TICKET',
+  );
+};
+
+export const fetchTickets = async (accessToken, propertyId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.get('/tickets', {
+        headers: getAuthHeaders(accessToken),
+        params: {
+          propertyId: propertyId.toString(),
+        },
+      }),
+    'FETCH_TICKETS',
+  );
+};
+
+export const updateTicketStatus = async (accessToken, ticketId, status) => {
+  return handleApiResponse(
+    () =>
+      apiClient.patch(
+        `/tickets/${ticketId}/status`,
+        { status },
+        {
+          headers: getAuthHeaders(accessToken),
+        },
+      ),
+    'UPDATE_TICKET_STATUS',
+  );
+};
+
+export const deleteTicket = async (accessToken, ticketId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.delete(`/tickets/${ticketId}`, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'DELETE_TICKET',
+  );
+};
+
+/**
+ * Document Management API calls
+ */
+export const uploadDocument = async (accessToken, documentData) => {
+  const formData = new FormData();
+  Object.keys(documentData).forEach(key => {
+    formData.append(key, documentData[key]);
   });
 
-  return tenants_res;
+  return handleApiResponse(
+    () =>
+      apiClient.post('/documents', formData, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'Content-Type': 'multipart/form-data',
+        },
+      }),
+    'UPLOAD_DOCUMENT',
+  );
 };
 
-export const createTicket = (accessToken, ticketData) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tickets`;
-
-  const create_ticket_res = axios.post(url, ticketData, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return create_ticket_res;
+export const fetchDocuments = async (accessToken, entityType, entityId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.get('/documents', {
+        headers: getAuthHeaders(accessToken),
+        params: {
+          entityType,
+          entityId: entityId.toString(),
+        },
+      }),
+    'FETCH_DOCUMENTS',
+  );
 };
 
-export const fetchTickets = (accessToken, propertyId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tickets?propertyId=${propertyId}`;
-
-  const tickets_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return tickets_res;
+export const deleteDocument = async (accessToken, documentId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.delete(`/documents/${documentId}`, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'DELETE_DOCUMENT',
+  );
 };
 
-export const updateTicket = (accessToken, ticketId, ticketData) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tickets/${ticketId}`;
-
-  const update_ticket_res = axios.patch(url, ticketData, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return update_ticket_res;
+export const createDocument = async (accessToken, propertyId, documentData) => {
+  return handleApiResponse(
+    () =>
+      apiClient.post('/documents', documentData, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'x-property-id': propertyId,
+        },
+      }),
+    'CREATE_DOCUMENT',
+  );
 };
 
-export const createDocument = (accessToken, property_id, documentData) => {
-  const url = `${FINANCY_ENDPOINT_URL}/documents`;
-
-  const create_document_res = axios.post(url, documentData, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-property-id': property_id,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return create_document_res;
-};
-
-export const updateDocument = (
+export const updateDocument = async (
   accessToken,
-  property_id,
+  propertyId,
   documentId,
   documentData,
 ) => {
-  const url = `${FINANCY_ENDPOINT_URL}/documents/${documentId}`;
-
-  const update_document_res = axios.put(url, documentData, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-property-id': property_id,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return update_document_res;
+  return handleApiResponse(
+    () =>
+      apiClient.put(`/documents/${documentId}`, documentData, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'x-property-id': propertyId,
+        },
+      }),
+    'UPDATE_DOCUMENT',
+  );
 };
 
-export const deleteDocument = (accessToken, property_id, documentId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/documents/${documentId}`;
-
-  const delete_document_res = axios.delete(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-property-id': property_id,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return delete_document_res;
+export const updateTicket = async (accessToken, ticketId, ticketData) => {
+  return handleApiResponse(
+    () =>
+      apiClient.patch(`/tickets/${ticketId}`, ticketData, {
+        headers: getAuthHeaders(accessToken),
+      }),
+    'UPDATE_TICKET',
+  );
 };
 
-export const fetchDocuments = (accessToken, property_id, propertyId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/documents`;
+/**
+ * File Upload Helper for S3
+ */
+export const uploadToS3 = async (uploadUrl, file) => {
+  try {
+    // Fetch the file as a blob
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
 
-  const documents_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-property-id': property_id,
-      Authorization: `Bearer ${accessToken}`,
-    },
-    params: {
-      propertyId: propertyId.toString(),
-    },
-  });
+    // Upload to S3 using fetch
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: blob,
+      headers: {
+        'Content-Type': file.type || 'image/jpeg',
+      },
+    });
 
-  return documents_res;
-};
+    if (!uploadResponse.ok) {
+      throw new Error(
+        `Failed to upload file to S3: ${uploadResponse.statusText}`,
+      );
+    }
 
-export const uploadDocument = async (upload_url, file) => {
-  // Fetch the file as a blob
-  const response = await fetch(file.uri);
-  const blob = await response.blob();
-
-  // Upload to S3 using fetch
-  const uploadResponse = await fetch(upload_url, {
-    method: 'PUT',
-    body: blob,
-    headers: {
-      'Content-Type': file.type || 'image/jpeg',
-    },
-  });
-
-  if (!uploadResponse.ok) {
-    throw new Error('Failed to upload image to S3');
+    return {
+      success: true,
+      status: uploadResponse.status,
+      message: 'File uploaded successfully',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      message: 'Failed to upload file',
+    };
   }
-
-  return uploadResponse;
-};
-
-export const getDocument = (accessToken, propertyId, documentId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/documents/${documentId}`;
-
-  const document_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-property-id': propertyId,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return document_res;
-};
-
-export const getTenants = (accessToken, propertyId, roomId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tenants/property/${propertyId}/room/${roomId}`;
-
-  const tenants_res = axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-property-id': propertyId,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return tenants_res;
-};
-
-export const putTenantOnNotice = (accessToken, tenantId, noticeData) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tenants/${tenantId}/notice`;
-
-  const put_notice_res = axios.patch(url, noticeData, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return put_notice_res;
-};
-
-export const deleteTenant = (accessToken, tenantId) => {
-  const url = `${FINANCY_ENDPOINT_URL}/tenants/${tenantId}`;
-
-  const delete_tenant_res = axios.delete(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  return delete_tenant_res;
 };

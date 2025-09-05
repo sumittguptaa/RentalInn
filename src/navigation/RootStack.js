@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert, AppState } from 'react-native';
+import { Alert } from 'react-native';
 
 // Screens
 import Login from '../screens/Login';
@@ -21,19 +21,17 @@ import { CredentialsContext } from '../context/CredentialsContext';
 
 // Theme
 import colors from '../theme/color';
-import { getOwnerDetails } from '../services/NetworkUtils';
 
 // Constants
 const SPLASH_SCREEN_DURATION = 2000;
 const TOKEN_STORAGE_KEY = 'pgOwnerCredentials';
-const USER_DATA_STORAGE_KEY = 'pgOwnerCredentials';
 
 const Stack = createNativeStackNavigator();
 
 const RootStack = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isTokenValid, setIsTokenValid] = useState(false);
-  const { credentials, setCredentials } = useContext(CredentialsContext);
+  const { credentials, setCredentials, isAuthenticated } =
+    useContext(CredentialsContext);
 
   // Default screen options for better consistency
   const defaultScreenOptions = {
@@ -71,80 +69,32 @@ const RootStack = () => {
     headerPressOpacity: 0.8,
   };
 
-  // Validate token function
-  const validateToken = async token => {
-    try {
-      // Replace with your actual token validation API call
-      const response = await getOwnerDetails(token);
-
-      if (response.ok) {
-        const userData = await response.json();
-        return { isValid: true, userData };
-      }
-      return { isValid: false, userData: null };
-    } catch (error) {
-      console.error('Token validation error:', error);
-      return { isValid: false, userData: null };
-    }
-  };
-
-  // Initialize app function
-  const initializeApp = async () => {
-    try {
-      const storedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
-
-      if (storedToken) {
-        // Validate token with server
-        const res = await validateToken(storedToken);
-
-        const new_token = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
-
-        setIsTokenValid(true);
-        setCredentials(JSON.parse(new_token));
-      }
-    } catch (error) {
-      console.error('App initialization error:', error);
-      // Handle error gracefully - show login screen
-      setCredentials(null);
-      setIsTokenValid(false);
-
-      // Optional: Show error alert in development
-      if (__DEV__) {
-        Alert.alert(
-          'Initialization Error',
-          'Failed to initialize app. Please restart.',
-        );
-      }
-    }
-  };
-
-  // Handle app state changes for token refresh
+  // App initialization effect
   useEffect(() => {
-    const handleAppStateChange = nextAppState => {
-      if (nextAppState === 'active' && credentials?.token) {
-        // Re-validate token when app becomes active
-        validateToken(credentials.token).then(({ isValid }) => {
-          if (!isValid) {
-            setCredentials(null);
-            setIsTokenValid(false);
-            AsyncStorage.multiRemove([
-              TOKEN_STORAGE_KEY,
-              USER_DATA_STORAGE_KEY,
-            ]);
-          }
-        });
+    const initializeApp = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+
+        if (storedToken) {
+          // Parse and set the stored credentials
+          const storedCredentials = JSON.parse(storedToken);
+          setCredentials(storedCredentials);
+        }
+      } catch (error) {
+        console.error('App initialization error:', error);
+        // Handle error gracefully - credentials context will show login screen
+        setCredentials(null);
+
+        // Optional: Show error alert in development
+        if (__DEV__) {
+          Alert.alert(
+            'Initialization Error',
+            'Failed to initialize app. Please restart.',
+          );
+        }
       }
     };
 
-    const subscription = AppState.addEventListener(
-      'change',
-      handleAppStateChange,
-    );
-    return () => subscription?.remove();
-  }, [credentials?.token]);
-
-  // App initialization effect
-  useEffect(() => {
     const initApp = async () => {
       await initializeApp();
 
@@ -157,18 +107,14 @@ const RootStack = () => {
     };
 
     initApp();
-  }, []);
+  }, [setCredentials]);
 
   // Show splash screen while loading
   if (isLoading) {
     return <SplashScreen />;
   }
 
-  // Determine initial route based on authentication status
-  const isAuthenticated = credentials && isTokenValid;
-
-  // In your handleLogin function, after setCredentials:
-
+  // Determine initial route based on authentication status from CredentialsContext
   const initialRouteName = isAuthenticated ? 'DrawerStack' : 'Login';
 
   return (

@@ -1,471 +1,731 @@
-import React, {useState, useContext} from 'react';
-import {StatusBar, View, TouchableOpacity} from 'react-native';
-import {Formik} from 'formik';
-import {TextInput, Button, Text, Snackbar, useTheme} from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {CredentialsContext} from '../context/CredentialsContext';
-import {handleUserSignup} from '../services/NetworkUtils';
+import React, { useState, useContext, useCallback } from 'react';
+import {
+  StatusBar,
+  Dimensions,
+  View,
+  TouchableOpacity,
+  Platform,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
+import { Button, TextInput, Snackbar, Card } from 'react-native-paper';
+import { Image } from 'react-native';
+
+// Contexts
+import { CredentialsContext } from '../context/CredentialsContext';
+import { ThemeContext } from '../context/ThemeContext';
+
+// Components
 import KeyBoardAvoidingWrapper from '../components/KeyBoardAvoidingWrapper';
-import {Image} from 'react-native';
 import StandardText from '../components/StandardText/StandardText';
 
-const SignUp = ({navigation}) => {
+// Services and utilities
+import { handleUserSignup } from '../services/NetworkUtils';
+import helpers from '../navigation/helpers';
+
+const { AnalyticsHelper } = helpers;
+
+import { ERROR_MESSAGES } from '../navigation/constants';
+
+// Theme
+import colors from '../theme/color';
+
+const SignUp = ({ navigation }) => {
+  // State management
   const [hidePassword, setHidePassword] = useState(true);
   const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
-  const [message, setMessage] = useState('');
-  const [visible, setVisible] = useState(false);
-  const {setStoredCredentials} = useContext(CredentialsContext);
-  const {colors} = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSignup = async (credentials, setSubmitting, resetForm) => {
-    setMessage('');
-    setVisible(false);
+  // Form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [country, setCountry] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Contexts
+  const { setCredentials } = useContext(CredentialsContext);
+  const { theme: mode } = useContext(ThemeContext);
+
+  // Theme variables
+  const isDark = mode === 'dark';
+  const backgroundColor = isDark
+    ? colors.backgroundDark
+    : colors.backgroundLight;
+  const primary = colors.primary;
+  const onPrimary = colors.onPrimary;
+  const cardBackground = isDark ? colors.backgroundDark : colors.white;
+  const textPrimary = isDark ? colors.white : colors.textPrimary;
+  const textSecondary = isDark ? colors.light_gray : colors.textSecondary;
+
+  // Clear error message after 5 seconds
+  const clearErrorMessage = useCallback(() => {
+    if (errorMessage) {
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
+  }, [errorMessage]);
+
+  // Form validation
+  const validateForm = useCallback(() => {
+    if (!firstName.trim()) {
+      setErrorMessage('First name is required');
+      clearErrorMessage();
+      return false;
+    }
+    if (!lastName.trim()) {
+      setErrorMessage('Last name is required');
+      clearErrorMessage();
+      return false;
+    }
+    if (!email.trim()) {
+      setErrorMessage('Email is required');
+      clearErrorMessage();
+      return false;
+    }
+    if (!email.includes('@')) {
+      setErrorMessage('Please enter a valid email address');
+      clearErrorMessage();
+      return false;
+    }
+    if (!phone.trim()) {
+      setErrorMessage('Phone number is required');
+      clearErrorMessage();
+      return false;
+    }
+    if (!password.trim()) {
+      setErrorMessage('Password is required');
+      clearErrorMessage();
+      return false;
+    }
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters');
+      clearErrorMessage();
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      clearErrorMessage();
+      return false;
+    }
+    return true;
+  }, [
+    firstName,
+    lastName,
+    email,
+    phone,
+    password,
+    confirmPassword,
+    clearErrorMessage,
+  ]);
+
+  // Handle signup process
+  const handleSignup = useCallback(async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrorMessage('');
 
     try {
-      delete credentials.confirmPassword;
-      const response = await handleUserSignup(credentials);
-      const {user, message} = response;
-      // clear form
-      resetForm();
-    } catch (error) {
-      let errorMessage =
-        'An error occurred. Please check your network and try again.';
+      // Track signup attempt
+      AnalyticsHelper.trackEvent('signup_attempt', { email });
 
-      if (error.response && error.response.data) {
-        if (error.response.data.message) {
-          if (Array.isArray(error.response.data.message)) {
-            errorMessage = error.response.data.message.join(', ');
-          } else {
-            errorMessage = error.response.data.message;
-          }
-        } else if (error.response.data.error) {
-          errorMessage = error.response.data.error;
-        }
+      // Prepare signup data
+      const signupData = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        postalCode,
+        country,
+        password,
+        role: 'landlord',
+      };
+
+      // Call signup API
+      const response = await handleUserSignup(signupData);
+
+      // Check if signup was successful
+      if (!response.success) {
+        throw new Error(response.error || 'Signup failed');
       }
-      setMessage(errorMessage);
-      setVisible(true);
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
-  const persistLogin = async (credentials, message) => {
-    try {
-      await AsyncStorage.setItem(
-        'pgOwnerCredentials',
-        JSON.stringify(credentials),
-      );
-      setMessage(message);
-      setVisible(true);
-      setStoredCredentials(credentials);
+      // Extract data from API response
+      const { user, accessToken } = response.data || {};
+
+      // Validate required fields
+      if (!user || !accessToken) {
+        throw new Error('Invalid signup response: missing user data or token');
+      }
+
+      // Update credentials context with both token formats for compatibility
+      const credentialsToSet = {
+        ...user,
+        email: user.email || email, // Ensure email is present
+        token: accessToken, // For internal storage/helpers
+        accessToken: accessToken, // For API calls that expect accessToken
+      };
+
+      await setCredentials(credentialsToSet);
+
+      // Track successful signup
+      AnalyticsHelper.trackEvent('signup_success', {
+        email,
+        signupMethod: 'email_password',
+      });
+
+      // Optional: Show success message briefly
+      setErrorMessage('');
+
+      // Navigation will be handled automatically by RootStack
     } catch (error) {
-      console.error('Persisting login failed', error);
-      setMessage('Persisting login failed');
-      setVisible(true);
+      console.error('Signup Error:', error);
+
+      // Track signup failure
+      AnalyticsHelper.trackEvent('signup_failure', {
+        email,
+        error: error.message,
+      });
+
+      // Handle different error types
+      let errorMsg =
+        ERROR_MESSAGES.SIGNUP_FAILED || 'Signup failed. Please try again.';
+
+      if (
+        error.message?.includes('network') ||
+        error.message?.includes('Network')
+      ) {
+        errorMsg =
+          ERROR_MESSAGES.NETWORK_ERROR ||
+          'Network error. Please check your connection.';
+      } else if (error.message?.includes('server') || error.status >= 500) {
+        errorMsg =
+          ERROR_MESSAGES.SERVER_ERROR ||
+          'Server error. Please try again later.';
+      } else if (error.status === 409 || error.message?.includes('exists')) {
+        errorMsg = 'An account with this email already exists.';
+      }
+
+      setErrorMessage(errorMsg);
+      clearErrorMessage();
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [
+    validateForm,
+    firstName,
+    lastName,
+    email,
+    phone,
+    address,
+    city,
+    state,
+    postalCode,
+    country,
+    password,
+    setCredentials,
+    clearErrorMessage,
+  ]);
 
   return (
     <KeyBoardAvoidingWrapper>
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.background,
-          padding: 20,
-          position: 'relative',
-        }}>
-        <StatusBar barStyle="dark-content" />
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Login')}
-          style={{position: 'absolute', top: 20, left: 20, zIndex: 999}}>
-          <MaterialCommunityIcons
-            name="arrow-left"
-            size={30}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
-        <View style={{alignItems: 'center', marginBottom: 20}}>
+      <View style={[styles.container, { backgroundColor }]}>
+        <StatusBar
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={backgroundColor}
+          translucent={Platform.OS === 'android'}
+        />
+
+        {/* Header Section */}
+        <View
+          style={[
+            styles.headerSection,
+            {
+              backgroundColor: primary,
+              height: Dimensions.get('window').height * 0.35,
+            },
+          ]}
+        >
           <Image
-            style={{
-              width: 100,
-              height: 100,
-              alignSelf: 'center',
-              borderRadius: 50,
-            }}
-            source={require('../assets/rentalinn.png')}
+            source={require('../assets/rentalinn-without-bg.png')}
+            style={styles.logoImage}
             resizeMode="contain"
           />
           <StandardText
-            fontWeight={'bold'}
-            style={{
-              color: colors.primary,
-              fontSize: 35,
-              marginTop: 15,
-              paddingTop: 15,
-            }}>
-            Sign Up
+            fontWeight="bold"
+            style={styles.headerTitle}
+            color="default_white"
+          >
+            Create Account
+          </StandardText>
+          <StandardText style={[styles.headerSubtitle, { color: onPrimary }]}>
+            Join RentalInn to manage your properties
           </StandardText>
         </View>
 
-        <Formik
-          initialValues={{
-            firstName: '',
-            lastName: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-            role: 'landlord',
-            phone: '',
-            address: '',
-            city: '',
-            state: '',
-            postalCode: '',
-            country: '',
-          }}
-          onSubmit={(values, {setSubmitting, resetForm}) =>
-            handleSignup(values, setSubmitting, resetForm)
-          }>
-          {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            values,
-            isSubmitting,
-            resetForm,
-          }) => (
-            <View style={{marginBottom: 20}}>
-              <TextInput
-                label="First Name"
-                mode="outlined"
-                value={values.firstName}
-                onChangeText={handleChange('firstName')}
-                onBlur={handleBlur('firstName')}
-                left={<TextInput.Icon icon="account" color={colors.primary} />}
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+        {/* Signup Form Section */}
+        <ScrollView
+          style={styles.formContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Card style={[styles.card, { backgroundColor: cardBackground }]}>
+            {/* First Name */}
+            <TextInput
+              label="First Name"
+              value={firstName}
+              onChangeText={setFirstName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              mode="outlined"
+              left={<TextInput.Icon icon="account" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Last Name"
-                mode="outlined"
-                value={values.lastName}
-                onChangeText={handleChange('lastName')}
-                onBlur={handleBlur('lastName')}
-                left={<TextInput.Icon icon="account" color={colors.primary} />}
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Last Name */}
+            <TextInput
+              label="Last Name"
+              value={lastName}
+              onChangeText={setLastName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              mode="outlined"
+              left={<TextInput.Icon icon="account" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Phone Number"
-                mode="outlined"
-                value={values.phone}
-                onChangeText={handleChange('phone')}
-                onBlur={handleBlur('phone')}
-                keyboardType="phone-pad"
-                left={<TextInput.Icon icon="phone" color={colors.primary} />}
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Email */}
+            <TextInput
+              label="Email Address"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              mode="outlined"
+              left={<TextInput.Icon icon="email" />}
+              returnKeyType="next"
+              error={errorMessage.includes('email')}
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: errorMessage.includes('email')
+                    ? colors.error
+                    : textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Email"
-                mode="outlined"
-                value={values.email}
-                onChangeText={handleChange('email')}
-                onBlur={handleBlur('email')}
-                keyboardType="email-address"
-                left={<TextInput.Icon icon="email" color={colors.primary} />}
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Phone */}
+            <TextInput
+              label="Phone Number"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              mode="outlined"
+              left={<TextInput.Icon icon="phone" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Address"
-                mode="outlined"
-                value={values.address}
-                onChangeText={handleChange('address')}
-                onBlur={handleBlur('address')}
-                left={
-                  <TextInput.Icon icon="map-marker" color={colors.primary} />
-                }
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Address */}
+            <TextInput
+              label="Address"
+              value={address}
+              onChangeText={setAddress}
+              autoCapitalize="words"
+              mode="outlined"
+              left={<TextInput.Icon icon="map-marker" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="City"
-                mode="outlined"
-                value={values.city}
-                onChangeText={handleChange('city')}
-                onBlur={handleBlur('city')}
-                left={<TextInput.Icon icon="city" color={colors.primary} />}
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* City */}
+            <TextInput
+              label="City"
+              value={city}
+              onChangeText={setCity}
+              autoCapitalize="words"
+              mode="outlined"
+              left={<TextInput.Icon icon="city" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="State"
-                mode="outlined"
-                value={values.state}
-                onChangeText={handleChange('state')}
-                onBlur={handleBlur('state')}
-                left={<TextInput.Icon icon="map" color={colors.primary} />}
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* State */}
+            <TextInput
+              label="State"
+              value={state}
+              onChangeText={setState}
+              autoCapitalize="words"
+              mode="outlined"
+              left={<TextInput.Icon icon="map" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Postal Code"
-                mode="outlined"
-                value={values.postalCode}
-                onChangeText={handleChange('postalCode')}
-                onBlur={handleBlur('postalCode')}
-                keyboardType="numeric"
-                left={
-                  <TextInput.Icon icon="code-brackets" color={colors.primary} />
-                }
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Postal Code */}
+            <TextInput
+              label="Postal Code"
+              value={postalCode}
+              onChangeText={setPostalCode}
+              keyboardType="numeric"
+              mode="outlined"
+              left={<TextInput.Icon icon="code-brackets" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Country"
-                mode="outlined"
-                value={values.country}
-                onChangeText={handleChange('country')}
-                onBlur={handleBlur('country')}
-                left={<TextInput.Icon icon="flag" color={colors.primary} />}
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Country */}
+            <TextInput
+              label="Country"
+              value={country}
+              onChangeText={setCountry}
+              autoCapitalize="words"
+              mode="outlined"
+              left={<TextInput.Icon icon="flag" />}
+              returnKeyType="next"
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Password"
-                mode="outlined"
-                secureTextEntry={hidePassword}
-                value={values.password}
-                onChangeText={handleChange('password')}
-                onBlur={handleBlur('password')}
-                left={<TextInput.Icon icon="lock" color={colors.primary} />}
-                right={
-                  <TextInput.Icon
-                    icon={hidePassword ? 'eye-off' : 'eye'}
-                    onPress={() => setHidePassword(!hidePassword)}
-                  />
-                }
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Password */}
+            <TextInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={hidePassword}
+              mode="outlined"
+              left={<TextInput.Icon icon="lock" />}
+              right={
+                <TextInput.Icon
+                  icon={hidePassword ? 'eye-off' : 'eye'}
+                  onPress={() => setHidePassword(!hidePassword)}
+                />
+              }
+              returnKeyType="next"
+              error={errorMessage.includes('password')}
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: errorMessage.includes('password')
+                    ? colors.error
+                    : textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <TextInput
-                label="Confirm Password"
-                mode="outlined"
-                secureTextEntry={hideConfirmPassword}
-                value={values.confirmPassword}
-                onChangeText={handleChange('confirmPassword')}
-                onBlur={handleBlur('confirmPassword')}
-                left={<TextInput.Icon icon="lock" color={colors.primary} />}
-                right={
-                  <TextInput.Icon
-                    icon={hideConfirmPassword ? 'eye-off' : 'eye'}
-                    onPress={() => setHideConfirmPassword(!hideConfirmPassword)}
-                  />
-                }
-                theme={{
-                  colors: {
-                    text: colors.textPrimary,
-                    placeholder: colors.textSecondary,
-                    primary: colors.primary,
-                    background: colors.background,
-                  },
-                  fonts: {
-                    regular: 'Metropolis-Regular',
-                    medium: 'Metropolis-Medium',
-                    bold: 'Metropolis-Bold',
-                    semibold: 'Metropolis-SemiBold',
-                    thin: 'Metropolis-Thin',
-                  },
-                }}
-                style={{marginTop: 15, fontFamily: 'Metropolis-Medium'}}
-              />
+            {/* Confirm Password */}
+            <TextInput
+              label="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={hideConfirmPassword}
+              mode="outlined"
+              left={<TextInput.Icon icon="lock" />}
+              right={
+                <TextInput.Icon
+                  icon={hideConfirmPassword ? 'eye-off' : 'eye'}
+                  onPress={() => setHideConfirmPassword(!hideConfirmPassword)}
+                />
+              }
+              returnKeyType="done"
+              onSubmitEditing={handleSignup}
+              error={errorMessage.includes('password')}
+              theme={{
+                colors: {
+                  text: textPrimary,
+                  placeholder: textSecondary,
+                  primary: primary,
+                  background: cardBackground,
+                  outline: errorMessage.includes('password')
+                    ? colors.error
+                    : textSecondary,
+                },
+                fonts: {
+                  regular: 'Metropolis-Regular',
+                  medium: 'Metropolis-Medium',
+                },
+              }}
+              style={styles.input}
+              contentStyle={styles.inputContent}
+            />
 
-              <Button
-                mode="contained"
-                onPress={handleSubmit}
-                loading={isSubmitting}
-                style={{marginTop: 20}}
-                labelStyle={{fontFamily: 'Metropolis-Bold', fontSize: 16}}>
-                Sign Up
-              </Button>
+            {/* Signup Button */}
+            <Button
+              mode="contained"
+              onPress={handleSignup}
+              loading={loading}
+              disabled={loading}
+              style={[styles.signupButton, { backgroundColor: primary }]}
+              labelStyle={[styles.buttonLabel, { color: onPrimary }]}
+            >
+              Create Account
+            </Button>
 
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Login')}
-                style={{marginTop: 20, alignItems: 'center'}}>
-                <StandardText
-                  style={{
-                    color: colors.primary,
-                    marginTop: 20,
-                    textAlign: 'center',
-                    textDecorationLine: 'underline',
-                  }}>
-                  Already have an account? Sign In
+            {/* Login Link */}
+            <View style={styles.loginContainer}>
+              <StandardText
+                style={[styles.loginText, { color: textSecondary }]}
+              >
+                Already have an account?{' '}
+              </StandardText>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <StandardText style={[styles.loginLink, { color: primary }]}>
+                  Sign In
                 </StandardText>
               </TouchableOpacity>
             </View>
-          )}
-        </Formik>
+          </Card>
+        </ScrollView>
 
+        {/* Error Snackbar */}
         <Snackbar
-          visible={visible}
-          onDismiss={() => setVisible(false)}
-          duration={3000}>
-          {message}
+          visible={!!errorMessage}
+          onDismiss={() => setErrorMessage('')}
+          duration={5000}
+          action={{
+            label: 'Dismiss',
+            onPress: () => setErrorMessage(''),
+            textColor: colors.white,
+          }}
+          style={[
+            styles.snackbar,
+            {
+              backgroundColor: colors.error,
+            },
+          ]}
+        >
+          <StandardText style={styles.snackbarText}>
+            {errorMessage}
+          </StandardText>
         </Snackbar>
       </View>
     </KeyBoardAvoidingWrapper>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerSection: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 20 : 60,
+  },
+  logoImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  headerTitle: {
+    fontSize: 28,
+    marginTop: 20,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+    marginTop: -50,
+    paddingBottom: 20,
+    flex: 1,
+  },
+  card: {
+    padding: 24,
+    borderRadius: 16,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+  },
+  input: {
+    marginBottom: 16,
+    fontFamily: 'Metropolis-Medium',
+  },
+  inputContent: {
+    fontFamily: 'Metropolis-Regular',
+  },
+  signupButton: {
+    marginTop: 8,
+    marginBottom: 20,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  buttonLabel: {
+    fontFamily: 'Metropolis-Bold',
+    fontSize: 16,
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginText: {
+    fontSize: 14,
+    fontFamily: 'Metropolis-Regular',
+  },
+  loginLink: {
+    fontSize: 14,
+    fontFamily: 'Metropolis-Bold',
+    textDecorationLine: 'underline',
+  },
+  snackbar: {
+    borderRadius: 8,
+    margin: 16,
+  },
+  snackbarText: {
+    color: 'white',
+    fontSize: 14,
+  },
+});
 
 export default SignUp;

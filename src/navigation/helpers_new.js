@@ -2,19 +2,8 @@
 import { CommonActions, StackActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { STORAGE_KEYS, ERROR_MESSAGES } from './constants';
-
-// Safe NetInfo import with fallback
-let NetInfo;
-try {
-  NetInfo = require('@react-native-community/netinfo').default;
-} catch (error) {
-  console.warn('NetInfo not available, using mock');
-  NetInfo = {
-    fetch: () => Promise.resolve({ isConnected: true, type: 'wifi' }),
-    addEventListener: () => () => {},
-  };
-}
 
 /**
  * Navigation helper functions for consistent navigation throughout the app
@@ -333,13 +322,6 @@ export class ErrorHelper {
         message: error.message,
         stack: error.stack,
         name: error.name,
-        // Add axios-specific error details
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.response?.data,
-        isNetworkError: !error.response,
       },
       context,
       userId,
@@ -352,21 +334,7 @@ export class ErrorHelper {
     }
 
     if (__DEV__) {
-      console.error('Error logged:', {
-        context,
-        message: error.message,
-        status: error.response?.status,
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.response?.data,
-        isNetworkError: !error.response,
-      });
-    }
-  }
-
-  static logInfo(message, context = '', data = null) {
-    if (__DEV__) {
-      console.log(`[${context}] ${message}`, data ? data : '');
+      console.error('Error logged:', errorEntry);
     }
   }
 
@@ -446,69 +414,6 @@ export class PerformanceHelper {
   }
 }
 
-/**
- * Analytics and tracking helper functions
- */
-export class AnalyticsHelper {
-  static trackScreenView(screenName, params = {}) {
-    if (__DEV__) {
-      console.log('Screen View:', screenName, params);
-      return;
-    }
-
-    // Integrate with your analytics service
-    // Firebase Analytics, Mixpanel, etc.
-    try {
-      // analytics().logScreenView({
-      //   screen_name: screenName,
-      //   screen_class: screenName,
-      //   ...params
-      // });
-    } catch (error) {
-      console.error('Analytics tracking error:', error);
-    }
-  }
-
-  static trackEvent(eventName, properties = {}) {
-    if (__DEV__) {
-      console.log('Event:', eventName, properties);
-      return;
-    }
-
-    try {
-      // analytics().logEvent(eventName, properties);
-    } catch (error) {
-      console.error('Analytics event error:', error);
-    }
-  }
-
-  static trackUserProperty(property, value) {
-    if (__DEV__) {
-      console.log('User Property:', property, value);
-      return;
-    }
-
-    try {
-      // analytics().setUserProperty(property, value);
-    } catch (error) {
-      console.error('Analytics user property error:', error);
-    }
-  }
-
-  static setUserId(userId) {
-    if (__DEV__) {
-      console.log('User ID:', userId);
-      return;
-    }
-
-    try {
-      // analytics().setUserId(userId);
-    } catch (error) {
-      console.error('Analytics user ID error:', error);
-    }
-  }
-}
-
 export default {
   NavigationHelper,
   AuthHelper,
@@ -516,18 +421,4 @@ export default {
   NetworkHelper,
   ErrorHelper,
   PerformanceHelper,
-  AnalyticsHelper,
 };
-
-// Debug log for development
-if (__DEV__) {
-  console.log('Helpers exported:', {
-    NavigationHelper: !!NavigationHelper,
-    AuthHelper: !!AuthHelper,
-    StorageHelper: !!StorageHelper,
-    NetworkHelper: !!NetworkHelper,
-    ErrorHelper: !!ErrorHelper,
-    PerformanceHelper: !!PerformanceHelper,
-    AnalyticsHelper: !!AnalyticsHelper,
-  });
-}

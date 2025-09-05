@@ -3,11 +3,11 @@ const colors = {
   primary: '#007BFF',
   secondary: '#003366',
   accent: '#66B2FF',
+  background: '#F8F9FA',
 
   // Backgrounds
   backgroundLight: '#F8F9FA',
   backgroundDark: '#212529',
-  background: '#F8F9FA', // ✅ default background alias
 
   // Text
   textPrimary: '#212529',
@@ -35,7 +35,7 @@ export default colors;
 
 export const fadedColorOpacity = 0.5;
 
-export const getNameForColor = ({textColor}) => {
+export const getNameForColor = ({ textColor }) => {
   if (textColor === thresholdColor?.red?.textColor) {
     return 'default_red';
   }
@@ -71,10 +71,10 @@ export const typeThresholdText =
 export const typedefault = 'default' | 'locked';
 
 export const thresholdColor = {
-  red: {color: '#FFCFCF', textColor: '#ad0000'},
-  orange: {color: '#FFF6D1', textColor: '#F39E09'},
-  green: {color: '#CFFFD4', textColor: '#00940F'},
-  invalid: {color: '#fff', textColor: '#222'},
+  red: { color: '#FFCFCF', textColor: '#ad0000' },
+  orange: { color: '#FFF6D1', textColor: '#F39E09' },
+  green: { color: '#CFFFD4', textColor: '#00940F' },
+  invalid: { color: '#fff', textColor: '#222' },
 };
 
 export const colorMap = {
