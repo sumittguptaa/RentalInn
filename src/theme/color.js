@@ -1,41 +1,64 @@
 const colors = {
   // Brand
-  primary: '#007BFF',
-  secondary: '#003366',
-  accent: '#66B2FF',
+  primary: '#ee7b11',
+  secondary: '#effbff',
+  accent: '#2753c9',
 
   // Backgrounds
-  backgroundLight: '#F8F9FA',
-  backgroundDark: '#212529',
-  background: '#F8F9FA', // ✅ default background alias
+  backgroundLight: '#f9f9fb',
+  backgroundDark: '#081738',
+  background: '#f9f9fb', // ✅ default background alias
+
+  // Surface
+  surfaceLight: '#FFFFFF',
+  surfaceDark: '#000f30',
 
   // Text
-  textPrimary: '#212529',
-  textSecondary: '#6C757D',
+  textPrimary: '#141414',
+  textSecondary: '#102d47',
+  textDarkPrimary: '#FFFFFF',
+  textDarkSecondary: '#aec8df',
 
   // Feedback
-  success: '#28A745',
-  error: '#DC3545',
-  warning: '#FFC107',
-  info: '#17A2B8',
+  success: '#37a05b',
+  error: '#ee7b11',
+  warning: '#ee7b11',
+  info: '#2753c9',
 
   // Neutrals
   white: '#FFFFFF',
-  black: '#000000',
-  light_black: '#343A40',
-  light_gray: '#A0A0A0',
+  black: '#141414',
+  light_black: '#102d47',
+  light_gray: '#f1f1f5',
+  dark_gray: '#192a4a',
+
+  // Theme specific colors
+  cream: '#fff4ce',
+  darkCream: '#ffdfaf',
+  smokeGray: '#f1f1f5',
+  lightYellow: '#ffd44d',
+  skyMistBlue: '#aec8df',
+  borderColor: '#224767',
+  darkBorderColor: '#192a4a',
+  blue: '#1642b9',
 
   // Extras
   onPrimary: '#FFFFFF',
-  onBackground: '#212529',
-  onSurface: '#212529',
+  onBackground: '#141414',
+  onSurface: '#141414',
+  onBackgroundDark: '#FFFFFF',
+  onSurfaceDark: '#FFFFFF',
+
+  // Card shadows
+  cardShadowLight: 'rgba(17, 17, 26, 0.05)',
+  cardShadowDark: 'rgba(17, 17, 26, 0.3)',
 };
 
 export default colors;
 
 export const fadedColorOpacity = 0.5;
 
-export const getNameForColor = ({textColor}) => {
+export const getNameForColor = ({ textColor }) => {
   if (textColor === thresholdColor?.red?.textColor) {
     return 'default_red';
   }
@@ -71,37 +94,66 @@ export const typeThresholdText =
 export const typedefault = 'default' | 'locked';
 
 export const thresholdColor = {
-  red: {color: '#FFCFCF', textColor: '#ad0000'},
-  orange: {color: '#FFF6D1', textColor: '#F39E09'},
-  green: {color: '#CFFFD4', textColor: '#00940F'},
-  invalid: {color: '#fff', textColor: '#222'},
+  red: { color: '#FFCFCF', textColor: '#ad0000' },
+  orange: { color: '#FFF6D1', textColor: '#ee7b11' },
+  green: { color: '#CFFFD4', textColor: '#37a05b' },
+  invalid: { color: '#fff', textColor: '#222' },
 };
 
 export const colorMap = {
-  rausche: '#ff385c',
-  rausche_faded: '#FFA5B5',
-  black: '#222222',
+  primary: '#ee7b11',
+  secondary: '#effbff',
+  accent: '#2753c9',
+  black: '#141414',
   white: '#ffffff',
-  neutral_darker: '#c4c4c6',
-  neutral: '#e6e5eb',
-  neutral_faded: '#f3f2f8',
+  neutral_darker: '#102d47',
+  neutral: '#f1f1f5',
+  neutral_faded: '#aec8df',
+  cream: '#fff4ce',
+  darkCream: '#ffdfaf',
+  lightYellow: '#ffd44d',
+  skyMistBlue: '#aec8df',
+  blue: '#1642b9',
+  success: '#37a05b',
+  warning: '#ee7b11',
+  info: '#2753c9',
 };
+
 export const colorNames =
-  'rausche' |
+  'primary' |
+  'secondary' |
+  'accent' |
   'black' |
   'white' |
   'neutral' |
-  'rausche_faded' |
   'neutral_faded' |
-  'neutral_darker';
+  'neutral_darker' |
+  'cream' |
+  'darkCream' |
+  'lightYellow' |
+  'skyMistBlue' |
+  'blue' |
+  'success' |
+  'warning' |
+  'info';
+
 export const colorVals =
-  '#ff385c' |
-  '#222222' |
+  '#ee7b11' |
+  '#effbff' |
+  '#2753c9' |
+  '#141414' |
   '#ffffff' |
-  '#f3f2f8' |
-  '#FFA5B5' |
-  '#e6e5eb' |
-  '#c4c4c6';
+  '#f1f1f5' |
+  '#aec8df' |
+  '#102d47' |
+  '#fff4ce' |
+  '#ffdfaf' |
+  '#ffd44d' |
+  '#aec8df' |
+  '#1642b9' |
+  '#37a05b' |
+  '#ee7b11' |
+  '#2753c9';
 
 export const getColor = color => {
   return colorMap[color];
