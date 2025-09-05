@@ -169,16 +169,6 @@ const RootStack = () => {
             />
 
             <Stack.Screen
-              name={SCREEN_NAMES.SETTINGS}
-              component={RentDetails}
-              options={{
-                ...authenticatedScreenOptions,
-                headerTitle: 'Settings',
-                headerTintColor: colors.primary,
-              }}
-            />
-
-            <Stack.Screen
               name={SCREEN_NAMES.ROOM_DETAILS}
               component={RoomDetails}
               options={{
