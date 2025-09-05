@@ -11,7 +11,6 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Components
 import StandardText from '../../../components/StandardText/StandardText';
@@ -28,7 +27,7 @@ const { width: screenWidth } = Dimensions.get('window');
 
 const DrawerContent = ({ drawerWidth, screenWidth: propScreenWidth }) => {
   const navigation = useNavigation();
-  const { credentials, setCredentials } = useContext(CredentialsContext);
+  const { credentials, clearCredentials } = useContext(CredentialsContext);
   const { theme: mode } = useContext(ThemeContext);
 
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -77,43 +76,46 @@ const DrawerContent = ({ drawerWidth, screenWidth: propScreenWidth }) => {
 
   // Handle logout with confirmation
   const handleLogout = useCallback(async () => {
-    Alert.alert('Confirm Logout', 'Are you sure you want to logout?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setIsLoggingOut(true);
+    try {
+      setIsLoggingOut(true);
 
-            // Clear all stored data
-            await AsyncStorage.multiRemove([
-              'userToken',
-              'userData',
-              'userPreferences',
-            ]);
-
-            // Clear credentials context
-            setCredentials(null);
-
-            // Optional: Call logout API
-            // await logoutAPI();
-          } catch (error) {
-            console.error('Logout error:', error);
-            Alert.alert(
-              'Error',
-              'Failed to logout properly. Please try again.',
-            );
-          } finally {
-            setIsLoggingOut(false);
-          }
-        },
-      },
-    ]);
-  }, [setCredentials]);
+      // Show confirmation dialog
+      Alert.alert(
+        'Logout',
+        'Are you sure you want to logout?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => setIsLoggingOut(false),
+          },
+          {
+            text: 'Logout',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                // Clear credentials and logout
+                await clearCredentials();
+              } catch (error) {
+                console.error('Logout error:', error);
+                // Show error alert but still allow logout
+                Alert.alert(
+                  'Logout Error',
+                  'There was an issue logging out, but you have been signed out locally.',
+                );
+              } finally {
+                setIsLoggingOut(false);
+              }
+            },
+          },
+        ],
+        { cancelable: false },
+      );
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
+  }, [clearCredentials]);
 
   // Handle menu expansion toggle
   const toggleExpand = useCallback(label => {

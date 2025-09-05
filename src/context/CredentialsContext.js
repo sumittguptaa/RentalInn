@@ -145,7 +145,15 @@ export const CredentialsProvider = ({ children }) => {
         setLoading(true);
         setError(null);
 
-        if (!newCredentials || typeof newCredentials !== 'object') {
+        // Allow null/undefined for clearing credentials during logout
+        if (newCredentials === null || newCredentials === undefined) {
+          setCredentialsState(null);
+          setUserProfile(null);
+          setAuthState(AUTH_STATES.UNAUTHENTICATED);
+          return { success: true };
+        }
+
+        if (typeof newCredentials !== 'object') {
           throw new Error('Invalid credentials format');
         }
 
@@ -215,11 +223,13 @@ export const CredentialsProvider = ({ children }) => {
         setSessionTimeout(null);
       }
 
-      // Perform logout
-      const token = credentials?.token;
-      await AuthHelper.logout(token);
+      // Perform logout API call with current token
+      const currentToken = credentials?.token;
+      if (currentToken) {
+        await AuthHelper.logout(currentToken);
+      }
 
-      // Clear local state
+      // Clear local state directly (no validation needed)
       setCredentialsState(null);
       setUserProfile(null);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
@@ -234,6 +244,7 @@ export const CredentialsProvider = ({ children }) => {
       setCredentialsState(null);
       setUserProfile(null);
       setAuthState(AUTH_STATES.UNAUTHENTICATED);
+      setError(null);
     } finally {
       setLoading(false);
     }

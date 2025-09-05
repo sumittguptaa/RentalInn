@@ -78,12 +78,26 @@ const RootStack = () => {
         if (storedToken) {
           // Parse and set the stored credentials
           const storedCredentials = JSON.parse(storedToken);
-          setCredentials(storedCredentials);
+          // Validate the stored credentials before setting
+          if (
+            storedCredentials &&
+            typeof storedCredentials === 'object' &&
+            storedCredentials.email
+          ) {
+            setCredentials(storedCredentials);
+          } else {
+            console.warn('Invalid stored credentials format, clearing...');
+            await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+          }
         }
       } catch (error) {
         console.error('App initialization error:', error);
-        // Handle error gracefully - credentials context will show login screen
-        setCredentials(null);
+        // Clear potentially corrupted storage
+        try {
+          await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+        } catch (clearError) {
+          console.error('Failed to clear corrupted storage:', clearError);
+        }
 
         // Optional: Show error alert in development
         if (__DEV__) {
