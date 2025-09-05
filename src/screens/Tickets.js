@@ -252,7 +252,11 @@ const Tickets = ({ navigation }) => {
             <>
               {/* Ticket List */}
               {tickets.map(ticket => (
-                <StandardCard style={styles.card}>
+                <StandardCard
+                  style={styles.card}
+                  id={ticket.id}
+                  key={ticket.id}
+                >
                   {/* Header */}
                   <View style={styles.header}>
                     <StandardText fontWeight="semibold" style={styles.ticketId}>

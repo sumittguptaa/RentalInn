@@ -8,7 +8,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import { Avatar, Chip, Menu, Text } from 'react-native-paper';
+import { Avatar, Chip, Text } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ThemeContext } from '../context/ThemeContext';
 import StandardText from '../components/StandardText/StandardText';
@@ -24,10 +24,11 @@ import {
 } from '../services/NetworkUtils';
 import { CredentialsContext } from '../context/CredentialsContext';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const RoomDetails = ({ navigation, route }) => {
   const { theme: mode } = useContext(ThemeContext);
   const { credentials } = useContext(CredentialsContext);
-
   const { room } = route.params;
 
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -50,7 +51,6 @@ const RoomDetails = ({ navigation, route }) => {
                 credentials.property_id,
                 docId,
               );
-
               return res.data.download_url;
             } catch (e) {
               console.error('Error fetching document for ID', docId, e);
@@ -58,10 +58,10 @@ const RoomDetails = ({ navigation, route }) => {
             }
           }),
         );
-
         setImageUrls(urls.filter(Boolean));
       }
     };
+
     const fetchTenants = async () => {
       const res = await getTenants(
         credentials.accessToken,
@@ -70,21 +70,42 @@ const RoomDetails = ({ navigation, route }) => {
       );
       setTenants(res.data);
     };
+
     fetchImageUrls();
     fetchTenants();
-  }, [
-    room.image_document_id_list,
-    credentials.accessToken,
-    credentials.property_id,
-    room.id,
-  ]);
+  }, [room, credentials]);
 
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [anchorBedId, setAnchorBedId] = useState(null);
+  // ===== CUSTOM MENU STATE =====
+  const [activeMenuTenantId, setActiveMenuTenantId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState(null);
+  const anchorRefs = useRef({});
+
+  const openMenu = tenantId => {
+    const ref = anchorRefs.current[tenantId];
+    if (!ref || !ref.measureInWindow) {
+      setMenuPosition({
+        x: SCREEN_WIDTH / 2 - 80,
+        y: 200,
+        width: 0,
+        height: 0,
+      });
+      setActiveMenuTenantId(tenantId);
+      return;
+    }
+    ref.measureInWindow((x, y, width, height) => {
+      setMenuPosition({ x, y, width, height });
+      setActiveMenuTenantId(tenantId);
+    });
+  };
+
+  const closeMenu = () => {
+    setActiveMenuTenantId(null);
+    setMenuPosition(null);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Image Carousel */}
+      {/* ===== Image Carousel ===== */}
       <View style={{ height: 250, marginBottom: 12 }}>
         <Animated.ScrollView
           horizontal
@@ -100,11 +121,7 @@ const RoomDetails = ({ navigation, route }) => {
             <Image
               key={index}
               source={{ uri: img }}
-              style={{
-                width: screenWidth,
-                height: 250,
-                resizeMode: 'cover',
-              }}
+              style={{ width: screenWidth, height: 250, resizeMode: 'cover' }}
             />
           ))}
         </Animated.ScrollView>
@@ -128,7 +145,6 @@ const RoomDetails = ({ navigation, route }) => {
               outputRange: [0.3, 1, 0.3],
               extrapolate: 'clamp',
             });
-
             return (
               <Animated.View
                 key={index}
@@ -146,6 +162,7 @@ const RoomDetails = ({ navigation, route }) => {
         </View>
       </View>
 
+      {/* ===== Room Header ===== */}
       <View
         style={{
           flexDirection: 'row',
@@ -168,7 +185,6 @@ const RoomDetails = ({ navigation, route }) => {
             Room {room.name}
           </StandardText>
         </View>
-
         <View
           style={{
             backgroundColor: room.status === 'vacant' ? '#DFF5E1' : '#FFF2D8',
@@ -188,8 +204,6 @@ const RoomDetails = ({ navigation, route }) => {
           </Text>
         </View>
       </View>
-
-      {/* Horizonatal Line */}
       <View
         style={{
           height: 1,
@@ -202,7 +216,11 @@ const RoomDetails = ({ navigation, route }) => {
         }}
       />
 
-      <ScrollView style={{ paddingHorizontal: 15, paddingTop: 10 }}>
+      {/* ===== Content ===== */}
+      <ScrollView
+        style={{ paddingHorizontal: 15, paddingTop: 10 }}
+        onScrollBeginDrag={() => closeMenu()} // hide menu on scroll
+      >
         <View style={{ gap: 20 }}>
           <View
             style={{ flexDirection: 'row', justifyContent: 'space-between' }}
@@ -417,76 +435,32 @@ const RoomDetails = ({ navigation, route }) => {
               onPress={() => navigation.navigate('TenantDetails', { tenant })}
             >
               <View style={styles.row}>
-                {/* Avatar */}
                 <Avatar.Image
                   size={60}
-                  source={{
-                    uri: 'https://avatar.iran.liara.run/public/37',
-                  }}
+                  source={{ uri: 'https://avatar.iran.liara.run/public/37' }}
                   style={{ marginRight: 14 }}
                 />
-
-                {/* Info Section */}
                 <View style={{ flex: 1 }}>
                   <View style={styles.rowBetween}>
                     <StandardText fontWeight="bold" size="lg">
                       {tenant.name}
                     </StandardText>
 
-                    {/* Menu */}
-                    <Menu
-                      visible={menuVisible && anchorBedId === tenant.id}
-                      onDismiss={() => {
-                        setMenuVisible(false);
-                        setAnchorBedId(null);
-                      }}
-                      anchor={
-                        <TouchableOpacity
-                          onPress={() => {
-                            setMenuVisible(true);
-                            setAnchorBedId(tenant.id);
-                          }}
-                        >
-                          <MaterialCommunityIcons
-                            name="dots-vertical"
-                            size={22}
-                            color="#444"
-                          />
-                        </TouchableOpacity>
-                      }
+                    {/* Custom Menu Anchor */}
+                    <TouchableOpacity
+                      ref={r => (anchorRefs.current[tenant.id] = r)}
+                      onPress={() => openMenu(tenant.id)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Menu.Item onPress={() => {}} title="Edit" />
-                      <Menu.Item onPress={() => {}} title="Share" />
-                      <Menu.Item
-                        onPress={() => {
-                          putTenantOnNotice(
-                            credentials.accessToken,
-                            tenant.id,
-                            { notice: true },
-                          );
-                        }}
-                        title="Put on Notice"
+                      <MaterialCommunityIcons
+                        name="dots-vertical"
+                        size={22}
+                        color="#444"
                       />
-                      <Menu.Item
-                        onPress={async () => {
-                          await deleteTenant(
-                            credentials.accessToken,
-                            tenant.id,
-                          );
-                          // Refetch tenants after deletion
-                          const res = await getTenants(
-                            credentials.accessToken,
-                            credentials.property_id,
-                            room.id,
-                          );
-                          setTenants(res.data);
-                        }}
-                        title="Delete"
-                      />
-                    </Menu>
+                    </TouchableOpacity>
                   </View>
 
-                  {/* Quick badges */}
+                  {/* Badges */}
                   <View style={{ flexDirection: 'row', marginTop: 6 }}>
                     {tenant.has_dues && (
                       <Chip
@@ -506,7 +480,7 @@ const RoomDetails = ({ navigation, route }) => {
                     )}
                   </View>
 
-                  {/* Small details */}
+                  {/* Details */}
                   <View style={{ marginTop: 8 }}>
                     <View style={styles.detailRow}>
                       <MaterialCommunityIcons
@@ -540,7 +514,6 @@ const RoomDetails = ({ navigation, route }) => {
                         {tenant.has_dues ? 'Dues' : 'No Dues'}
                       </StandardText>
                     </View>
-
                     <View style={styles.detailRow}>
                       <MaterialCommunityIcons
                         name="calendar-check"
@@ -551,7 +524,6 @@ const RoomDetails = ({ navigation, route }) => {
                         Joined: {tenant.check_in_date}
                       </StandardText>
                     </View>
-
                     <View style={styles.detailRow}>
                       <MaterialCommunityIcons
                         name="calendar-check"
@@ -571,18 +543,88 @@ const RoomDetails = ({ navigation, route }) => {
 
         <Gap size="xxl" />
       </ScrollView>
+
+      {/* ===== CUSTOM MENU OVERLAY ===== */}
+      {activeMenuTenantId && menuPosition && (
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={() => closeMenu()}
+        >
+          <View
+            style={[
+              styles.popup,
+              {
+                top: menuPosition.y + menuPosition.height + 6,
+                left: Math.max(8, Math.min(menuPosition.x, SCREEN_WIDTH - 180)),
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                closeMenu();
+                navigation.navigate('EditTenant', {
+                  tenantId: activeMenuTenantId,
+                });
+              }}
+            >
+              <MaterialCommunityIcons
+                name="pencil"
+                size={18}
+                color="#555"
+                style={{ marginRight: 10 }}
+              />
+              <StandardText>Edit</StandardText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                putTenantOnNotice(credentials.accessToken, activeMenuTenantId, {
+                  notice: true,
+                });
+                closeMenu();
+              }}
+            >
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={18}
+                color="#e53935"
+                style={{ marginRight: 10 }}
+              />
+              <StandardText>Put on Notice</StandardText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={async () => {
+                await deleteTenant(credentials.accessToken, activeMenuTenantId);
+                closeMenu();
+                const res = await getTenants(
+                  credentials.accessToken,
+                  credentials.property_id,
+                  room.id,
+                );
+                setTenants(res.data);
+              }}
+            >
+              <MaterialCommunityIcons
+                name="trash-can-outline"
+                size={18}
+                color="#e53935"
+                style={{ marginRight: 10 }}
+              />
+              <StandardText>Delete</StandardText>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background, marginTop: 25 },
-  searchBar: {
-    marginBottom: 10,
-    backgroundColor: '#fff',
-    borderRadius: 25,
-    elevation: 2,
-  },
   chip: { marginRight: 10, borderRadius: 20, elevation: 1 },
   card: {
     backgroundColor: '#fff',
@@ -603,22 +645,40 @@ const styles = StyleSheet.create({
   },
   detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   detailText: { marginLeft: 6, color: '#444' },
-  badgeDues: {
-    backgroundColor: '#e53935',
-    marginRight: 6,
-    height: 26,
-  },
+  badgeDues: { backgroundColor: '#e53935', marginRight: 6, height: 26 },
   badgeNotice: {
     backgroundColor: '#ff9800',
     marginRight: 6,
-    height: 26,
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  fab: {
+
+  // Custom Menu Styles
+  menuOverlay: {
     position: 'absolute',
-    bottom: 40,
-    right: 30,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  popup: {
+    position: 'absolute',
+    minWidth: 160,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  menuItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

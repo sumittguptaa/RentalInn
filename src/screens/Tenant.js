@@ -247,7 +247,13 @@ const Tenants = ({ navigation }) => {
                         {tenant.is_on_notice && (
                           <Chip
                             style={styles.badgeNotice}
-                            textStyle={{ color: '#fff' }}
+                            textStyle={{
+                              color: '#fff',
+                              fontFamily: 'Metropolis-Medium',
+                              fontSize: 14,
+                              lineHeight: 16, // Add this to help with vertical centering
+                              textAlignVertical: 'center', // Add this to help with vertical centering
+                            }}
                           >
                             Notice
                           </Chip>
@@ -325,10 +331,10 @@ const Tenants = ({ navigation }) => {
                   },
                 ]}
               >
+                {/* Edit */}
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => {
-                    // example: navigate to edit screen
                     closeMenu();
                     navigation.navigate('EditTenant', {
                       tenantId: activeMenuTenantId,
@@ -344,6 +350,24 @@ const Tenants = ({ navigation }) => {
                   <StandardText>Edit</StandardText>
                 </TouchableOpacity>
 
+                {/* Share */}
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    closeMenu();
+                    // put your share logic here (e.g., Share API)
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="share-variant"
+                    size={18}
+                    color="#555"
+                    style={{ marginRight: 10 }}
+                  />
+                  <StandardText>Share</StandardText>
+                </TouchableOpacity>
+
+                {/* Put on Notice */}
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => {
@@ -365,6 +389,7 @@ const Tenants = ({ navigation }) => {
                   <StandardText>Put on Notice</StandardText>
                 </TouchableOpacity>
 
+                {/* Delete */}
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={async () => {
@@ -429,8 +454,8 @@ const styles = StyleSheet.create({
   },
   badgeNotice: {
     backgroundColor: '#ff9800',
-    marginRight: 6,
     height: 26,
+    marginRight: 6, // Add margin for consistency with badgeDues
   },
   fab: {
     position: 'absolute',
