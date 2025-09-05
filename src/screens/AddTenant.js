@@ -131,7 +131,7 @@ const AddTenant = ({ navigation }) => {
     setLoading(true);
     try {
       await addTenant(credentials.accessToken, credentials.property_id, tenant);
-      navigation.goBack();
+      navigation.goBack({ refresh: true });
     } catch (error) {
       setErrorMsg(
         error?.message ||

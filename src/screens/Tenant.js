@@ -97,8 +97,9 @@ const Tenants = ({ navigation }) => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFilter, search]);
+    const unsubscribe = navigation.addListener('focus', fetchData);
+    return unsubscribe;
+  }, [navigation, fetchData, search, selectedFilter]);
 
   // Open menu by measuring position of the icon using measureInWindow
   const openMenu = tenantId => {

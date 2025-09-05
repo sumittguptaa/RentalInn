@@ -1,5 +1,5 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View, Image} from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View, Image } from 'react-native';
 import {
   Button,
   Checkbox,
@@ -9,9 +9,9 @@ import {
   TextInput,
   useTheme,
 } from 'react-native-paper';
-import {Formik} from 'formik';
+import { Formik } from 'formik';
 import * as Yup from 'yup';
-import {CredentialsContext} from '../context/CredentialsContext';
+import { CredentialsContext } from '../context/CredentialsContext';
 import {
   createRoom,
   uploadDocument,
@@ -23,10 +23,10 @@ import Gap from '../components/Gap/Gap';
 import colors from '../theme/color';
 import StandardText from '../components/StandardText/StandardText';
 import * as ImagePicker from 'react-native-image-picker';
-import {Picker} from '@react-native-picker/picker';
-import {TouchableOpacity} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import { TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {ThemeContext} from '../context/ThemeContext';
+import { ThemeContext } from '../context/ThemeContext';
 
 const AddRoomSchema = Yup.object().shape({
   roomName: Yup.string().required('Room name is required'),
@@ -65,9 +65,9 @@ const AddRoomSchema = Yup.object().shape({
   ),
 });
 
-const AddRoom = ({navigation}) => {
-  const {credentials} = useContext(CredentialsContext);
-  const {theme: mode} = useContext(ThemeContext);
+const AddRoom = ({ navigation }) => {
+  const { credentials } = useContext(CredentialsContext);
+  const { theme: mode } = useContext(ThemeContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -111,7 +111,7 @@ const AddRoom = ({navigation}) => {
     if (event.type === 'set' && selectedDate) {
       setFieldValue('lastElectricityReadingDate', formatDate(selectedDate));
     }
-    setDatePicker(prev => ({...prev, show: false}));
+    setDatePicker(prev => ({ ...prev, show: false }));
   };
 
   const initialValues = {
@@ -176,7 +176,7 @@ const AddRoom = ({navigation}) => {
     setRoomImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddRoom = async (values, {resetForm}) => {
+  const handleAddRoom = async (values, { resetForm }) => {
     setLoading(true);
     setError('');
 
@@ -227,7 +227,7 @@ const AddRoom = ({navigation}) => {
       }
 
       resetForm();
-      navigation.navigate('Rooms', {refresh: true});
+      navigation.goBack({ refresh: true });
     } catch (err) {
       console.error(
         isEdit ? 'Failed to update room:' : 'Failed to add room:',
@@ -264,7 +264,8 @@ const AddRoom = ({navigation}) => {
           <Formik
             initialValues={initialValues}
             validationSchema={AddRoomSchema}
-            onSubmit={handleAddRoom}>
+            onSubmit={handleAddRoom}
+          >
             {({
               handleChange,
               handleBlur,
@@ -295,9 +296,10 @@ const AddRoom = ({navigation}) => {
                     onValueChange={value => setFieldValue('areaType', value)}
                     style={[
                       styles.picker,
-                      {color: mode === 'dark' ? '#e0e0e0' : '#000'},
+                      { color: mode === 'dark' ? '#e0e0e0' : '#000' },
                     ]}
-                    dropdownIconColor={mode === 'dark' ? '#e0e0e0' : '#000'}>
+                    dropdownIconColor={mode === 'dark' ? '#e0e0e0' : '#000'}
+                  >
                     <Picker.Item
                       label="Select Area Type"
                       value=""
@@ -462,7 +464,8 @@ const AddRoom = ({navigation}) => {
                       activeOpacity={1}
                       onPress={() =>
                         openDatePicker(values.lastElectricityReadingDate)
-                      }>
+                      }
+                    >
                       <View style={styles.flexOne} />
                     </TouchableOpacity>
                   </View>
@@ -489,7 +492,10 @@ const AddRoom = ({navigation}) => {
                 <View style={styles.imagePreviewContainer}>
                   {roomImages.map((img, idx) => (
                     <View key={idx} style={styles.roomImageWrapper}>
-                      <Image source={{uri: img.uri}} style={styles.roomImage} />
+                      <Image
+                        source={{ uri: img.uri }}
+                        style={styles.roomImage}
+                      />
                       <Button
                         icon="close"
                         compact
@@ -503,7 +509,8 @@ const AddRoom = ({navigation}) => {
                   icon="image"
                   mode="outlined"
                   onPress={pickImages}
-                  style={styles.uploadImageButton}>
+                  style={styles.uploadImageButton}
+                >
                   {roomImages.length > 0 ? 'Change Images' : 'Upload Images'}
                 </Button>
 
@@ -512,7 +519,8 @@ const AddRoom = ({navigation}) => {
                   onPress={handleSubmit}
                   loading={loading}
                   disabled={loading}
-                  style={styles.button}>
+                  style={styles.button}
+                >
                   {isEdit ? 'Update Room' : 'Add Room'}
                 </Button>
 
@@ -520,7 +528,8 @@ const AddRoom = ({navigation}) => {
                   mode="outlined"
                   onPress={() => navigation.goBack()}
                   style={styles.button}
-                  disabled={loading}>
+                  disabled={loading}
+                >
                   Cancel
                 </Button>
               </View>
