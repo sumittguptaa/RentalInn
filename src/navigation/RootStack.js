@@ -15,12 +15,16 @@ import TenantDetails from '../screens/TenantDetails';
 import AddRoom from '../screens/AddRoom';
 import AddTenant from '../screens/AddTenant';
 import AddTicket from '../screens/AddTicket';
+import Notices from '../screens/Notices';
 
 // Context
 import { CredentialsContext } from '../context/CredentialsContext';
 
 // Theme
 import colors from '../theme/color';
+
+// Constants
+import { SCREEN_NAMES } from './constants';
 
 // Constants
 const SPLASH_SCREEN_DURATION = 2000;
@@ -129,7 +133,9 @@ const RootStack = () => {
   }
 
   // Determine initial route based on authentication status from CredentialsContext
-  const initialRouteName = isAuthenticated ? 'DrawerStack' : 'Login';
+  const initialRouteName = isAuthenticated
+    ? SCREEN_NAMES.DRAWER_STACK
+    : SCREEN_NAMES.LOGIN;
 
   return (
     <NavigationContainer
@@ -154,7 +160,7 @@ const RootStack = () => {
           // Authenticated user screens
           <>
             <Stack.Screen
-              name="DrawerStack"
+              name={SCREEN_NAMES.DRAWER_STACK}
               component={DrawerStack}
               options={{
                 ...defaultScreenOptions,
@@ -163,7 +169,7 @@ const RootStack = () => {
             />
 
             <Stack.Screen
-              name="Settings"
+              name={SCREEN_NAMES.SETTINGS}
               component={RentDetails}
               options={{
                 ...authenticatedScreenOptions,
@@ -173,7 +179,7 @@ const RootStack = () => {
             />
 
             <Stack.Screen
-              name="RoomDetails"
+              name={SCREEN_NAMES.ROOM_DETAILS}
               component={RoomDetails}
               options={{
                 ...authenticatedScreenOptions,
@@ -183,11 +189,21 @@ const RootStack = () => {
             />
 
             <Stack.Screen
-              name="TenantDetails"
+              name={SCREEN_NAMES.TENANT_DETAILS}
               component={TenantDetails}
               options={{
                 ...authenticatedScreenOptions,
                 headerTitle: 'Tenant Details',
+                headerTintColor: colors.black,
+              }}
+            />
+
+            <Stack.Screen
+              name={SCREEN_NAMES.NOTICES}
+              component={Notices}
+              options={{
+                ...authenticatedScreenOptions,
+                headerTitle: 'Notices',
                 headerTintColor: colors.black,
               }}
             />
@@ -200,7 +216,7 @@ const RootStack = () => {
               }}
             >
               <Stack.Screen
-                name="AddRoom"
+                name={SCREEN_NAMES.ADD_ROOM}
                 component={AddRoom}
                 options={{
                   headerTitle: 'Add Room',
@@ -209,7 +225,7 @@ const RootStack = () => {
               />
 
               <Stack.Screen
-                name="AddTenant"
+                name={SCREEN_NAMES.ADD_TENANT}
                 component={AddTenant}
                 options={{
                   headerTitle: 'Add Tenant',
@@ -218,7 +234,7 @@ const RootStack = () => {
               />
 
               <Stack.Screen
-                name="AddTicket"
+                name={SCREEN_NAMES.ADD_TICKET}
                 component={AddTicket}
                 options={{
                   headerTitle: 'Add Ticket',
@@ -237,14 +253,14 @@ const RootStack = () => {
             }}
           >
             <Stack.Screen
-              name="Login"
+              name={SCREEN_NAMES.LOGIN}
               component={Login}
               options={{
                 animationTypeForReplace: credentials ? 'pop' : 'push',
               }}
             />
             <Stack.Screen
-              name="SignUp"
+              name={SCREEN_NAMES.SIGNUP}
               component={SignUp}
               options={{
                 animation: 'slide_from_right',

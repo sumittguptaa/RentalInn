@@ -13,13 +13,16 @@ import Tickets from '../screens/Tickets';
 // Theme
 import colors from '../theme/color';
 
+// Constants
+import { SCREEN_NAMES } from './constants';
+
 const Tab = createBottomTabNavigator();
 const { height: screenHeight } = Dimensions.get('window');
 
 // Tab configuration for better maintainability
 const TAB_CONFIG = [
   {
-    name: 'Dashboard',
+    name: SCREEN_NAMES.DASHBOARD,
     component: Home,
     label: 'Dashboard',
     iconLibrary: MaterialCommunityIcons,
@@ -27,7 +30,7 @@ const TAB_CONFIG = [
     unfocusedIcon: 'view-dashboard-outline',
   },
   {
-    name: 'Rooms',
+    name: SCREEN_NAMES.ROOMS,
     component: Rooms,
     label: 'Rooms',
     iconLibrary: MaterialCommunityIcons,
@@ -35,7 +38,7 @@ const TAB_CONFIG = [
     unfocusedIcon: 'door-closed',
   },
   {
-    name: 'Tenants',
+    name: SCREEN_NAMES.TENANTS,
     component: Tenants,
     label: 'Tenants',
     iconLibrary: Ionicons,
@@ -43,7 +46,7 @@ const TAB_CONFIG = [
     unfocusedIcon: 'people-outline',
   },
   {
-    name: 'Tickets',
+    name: SCREEN_NAMES.TICKETS,
     component: Tickets,
     label: 'Tickets',
     iconLibrary: MaterialCommunityIcons,
@@ -63,7 +66,7 @@ const BottomNavigation = () => {
     }
 
     return baseHeight;
-  }, [screenHeight]);
+  }, []);
 
   // Memoize screen options for performance
   const screenOptions = useMemo(
@@ -166,7 +169,7 @@ const BottomNavigation = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="Dashboard"
+      initialRouteName={SCREEN_NAMES.DASHBOARD}
       screenOptions={screenOptions}
       // Tab bar options
       tabBarOptions={{

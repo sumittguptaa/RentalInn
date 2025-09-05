@@ -28,7 +28,7 @@ const DrawerStack = () => {
     } else {
       return screenWidth * 0.8; // Larger phones and tablets
     }
-  }, [screenWidth]);
+  }, []);
 
   // Memoize screen options for performance
   const screenOptions = useMemo(

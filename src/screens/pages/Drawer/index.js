@@ -20,7 +20,8 @@ import { CredentialsContext } from '../../../context/CredentialsContext';
 import { ThemeContext } from '../../../context/ThemeContext';
 
 // Constants and utilities
-import { menuItems } from './constant';
+import { SCREEN_NAMES, menuItems } from '../../../navigation/constants';
+import { navigateToRoute } from '../../../navigation/navigationUtils';
 import colors from '../../../theme/color';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -128,19 +129,7 @@ const DrawerContent = ({ drawerWidth, screenWidth: propScreenWidth }) => {
   // Handle navigation with analytics
   const handleNavigation = useCallback(
     (route, params = {}) => {
-      try {
-        navigation.navigate('DrawerStack', {
-          screen: 'BottomNavigation',
-          params: { screen: route, ...params },
-        });
-
-        // Optional: Track navigation analytics
-        if (__DEV__) {
-          console.log('Drawer navigation:', route, params);
-        }
-      } catch (error) {
-        console.error('Navigation error:', error);
-      }
+      navigateToRoute(navigation, route, params);
     },
     [navigation],
   );

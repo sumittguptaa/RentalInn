@@ -45,6 +45,10 @@ export const SCREEN_NAMES = {
   REVENUE_OVERVIEW: 'RevenueOverview',
   EXPENSE_TRACKING: 'ExpenseTracking',
   PAYMENT_HISTORY: 'PaymentHistory',
+  NOTICES: 'Notices',
+  PAYMENTS: 'Payments',
+  KYC: 'KYC',
+  SUPPORT: 'Support',
   FAQ: 'FAQ',
   CONTACT_SUPPORT: 'ContactSupport',
   APP_TUTORIAL: 'AppTutorial',
@@ -193,7 +197,7 @@ export const API_ENDPOINTS = {
 export const menuItems = [
   {
     label: 'Dashboard',
-    icon: 'home-outline',
+    icon: 'grid-outline',
     route: SCREEN_NAMES.DASHBOARD,
   },
   {
@@ -215,6 +219,21 @@ export const menuItems = [
         route: 'RoomAnalytics',
       },
     ],
+  },
+  {
+    label: 'Payments',
+    icon: 'cash-outline',
+    route: SCREEN_NAMES.PAYMENTS,
+  },
+  {
+    label: 'KYC Documents',
+    icon: 'document-text-outline',
+    route: SCREEN_NAMES.KYC,
+  },
+  {
+    label: 'Notices',
+    icon: 'alert-circle-outline',
+    route: SCREEN_NAMES.NOTICES,
   },
   {
     label: 'Tenant Management',
@@ -280,6 +299,7 @@ export const menuItems = [
   {
     label: 'Help & Support',
     icon: 'help-circle-outline',
+    route: SCREEN_NAMES.SUPPORT,
     children: [
       {
         label: 'FAQ',
