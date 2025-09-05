@@ -9,13 +9,15 @@ import Login from '../screens/Login';
 import SignUp from '../screens/Signup';
 import SplashScreen from '../components/SplashScreen';
 import DrawerStack from './DrawerNavigation';
-import RentDetails from '../screens/RentDetails';
 import RoomDetails from '../screens/RoomDetails';
 import TenantDetails from '../screens/TenantDetails';
 import AddRoom from '../screens/AddRoom';
 import AddTenant from '../screens/AddTenant';
 import AddTicket from '../screens/AddTicket';
 import Notices from '../screens/Notices';
+import FAQ from '../screens/FAQ';
+import ContactSupport from '../screens/ContactSupport';
+import AppTutorial from '../screens/AppTutorial';
 
 // Context
 import { CredentialsContext } from '../context/CredentialsContext';
@@ -194,6 +196,36 @@ const RootStack = () => {
               options={{
                 ...authenticatedScreenOptions,
                 headerTitle: 'Notices',
+                headerTintColor: colors.black,
+              }}
+            />
+
+            <Stack.Screen
+              name={SCREEN_NAMES.FAQ}
+              component={FAQ}
+              options={{
+                ...authenticatedScreenOptions,
+                headerTitle: 'FAQ',
+                headerTintColor: colors.black,
+              }}
+            />
+
+            <Stack.Screen
+              name={SCREEN_NAMES.CONTACT_SUPPORT}
+              component={ContactSupport}
+              options={{
+                ...authenticatedScreenOptions,
+                headerTitle: 'Contact Support',
+                headerTintColor: colors.black,
+              }}
+            />
+
+            <Stack.Screen
+              name={SCREEN_NAMES.APP_TUTORIAL}
+              component={AppTutorial}
+              options={{
+                ...authenticatedScreenOptions,
+                headerTitle: 'App Tutorial',
                 headerTintColor: colors.black,
               }}
             />

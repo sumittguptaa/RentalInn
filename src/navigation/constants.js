@@ -303,15 +303,15 @@ export const menuItems = [
     children: [
       {
         label: 'FAQ',
-        route: 'FAQ',
+        route: SCREEN_NAMES.FAQ,
       },
       {
         label: 'Contact Support',
-        route: 'ContactSupport',
+        route: SCREEN_NAMES.CONTACT_SUPPORT,
       },
       {
         label: 'App Tutorial',
-        route: 'AppTutorial',
+        route: SCREEN_NAMES.APP_TUTORIAL,
       },
     ],
   },
