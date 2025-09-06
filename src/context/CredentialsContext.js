@@ -125,7 +125,8 @@ export const CredentialsProvider = ({ children }) => {
           }
         } catch (detailsError) {
           console.warn('Failed to fetch owner details:', detailsError);
-          // Don't fail authentication if details fetch fails
+          //temp : fail authentication if details fetch fails
+          setAuthState(AUTH_STATES.UNAUTHENTICATED);
         }
       } else {
         setAuthState(AUTH_STATES.UNAUTHENTICATED);

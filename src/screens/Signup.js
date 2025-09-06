@@ -22,13 +22,13 @@ import StandardText from '../components/StandardText/StandardText';
 // Services and utilities
 import { handleUserSignup } from '../services/NetworkUtils';
 import helpers from '../navigation/helpers';
+const { StorageHelper, PerformanceHelper } = helpers;
 
-const { AnalyticsHelper } = helpers;
-
-import { ERROR_MESSAGES } from '../navigation/constants';
+import { ERROR_MESSAGES, STORAGE_KEYS } from '../navigation/constants';
 
 // Theme
 import colors from '../theme/color';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignUp = ({ navigation }) => {
   // State management
@@ -66,11 +66,11 @@ const SignUp = ({ navigation }) => {
   const textSecondary = isDark ? colors.light_gray : colors.textSecondary;
 
   // Clear error message after 5 seconds
-  const clearErrorMessage = useCallback(() => {
-    if (errorMessage) {
-      setTimeout(() => setErrorMessage(''), 5000);
-    }
-  }, [errorMessage]);
+
+  const clearErrorMessage = PerformanceHelper.debounce(
+    () => setErrorMessage(''),
+    5000,
+  );
 
   // Form validation
   const validateForm = useCallback(() => {
@@ -134,7 +134,6 @@ const SignUp = ({ navigation }) => {
 
     try {
       // Track signup attempt
-      AnalyticsHelper.trackEvent('signup_attempt', { email });
 
       // Prepare signup data
       const signupData = {
@@ -160,7 +159,7 @@ const SignUp = ({ navigation }) => {
       }
 
       // Extract data from API response
-      const { user, accessToken } = response.data || {};
+      const { user, accessToken, refreshToken } = response.data || {};
 
       // Validate required fields
       if (!user || !accessToken) {
@@ -175,13 +174,21 @@ const SignUp = ({ navigation }) => {
         accessToken: accessToken, // For API calls that expect accessToken
       };
 
-      await setCredentials(credentialsToSet);
+      const storageResult = await StorageHelper.storeUserData(
+        user,
+        accessToken,
+        refreshToken,
+      );
 
-      // Track successful signup
-      AnalyticsHelper.trackEvent('signup_success', {
-        email,
-        signupMethod: 'email_password',
-      });
+      if (!storageResult.success) {
+        throw new Error(storageResult.error || 'Failed to store user data');
+      }
+
+      // Store refresh token if available (Note: already handled in storeUserData, but keeping for extra security)
+      if (refreshToken) {
+        await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+      }
+      await setCredentials(credentialsToSet);
 
       // Optional: Show success message briefly
       setErrorMessage('');
@@ -189,12 +196,6 @@ const SignUp = ({ navigation }) => {
       // Navigation will be handled automatically by RootStack
     } catch (error) {
       console.error('Signup Error:', error);
-
-      // Track signup failure
-      AnalyticsHelper.trackEvent('signup_failure', {
-        email,
-        error: error.message,
-      });
 
       // Handle different error types
       let errorMsg =
@@ -604,18 +605,21 @@ const SignUp = ({ navigation }) => {
             </Button>
 
             {/* Login Link */}
-            <View style={styles.loginContainer}>
+
+            <TouchableOpacity
+              style={styles.loginContainer}
+              onPress={() => navigation.navigate('Login')}
+            >
               <StandardText
                 style={[styles.loginText, { color: textSecondary }]}
               >
                 Already have an account?{' '}
               </StandardText>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <StandardText style={[styles.loginLink, { color: primary }]}>
-                  Sign In
-                </StandardText>
-              </TouchableOpacity>
-            </View>
+
+              <StandardText style={[styles.loginLink, { color: primary }]}>
+                Sign In
+              </StandardText>
+            </TouchableOpacity>
           </Card>
         </ScrollView>
 

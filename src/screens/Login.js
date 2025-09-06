@@ -23,7 +23,7 @@ import StandardText from '../components/StandardText/StandardText';
 import { handleUserLogin } from '../services/NetworkUtils';
 import helpers from '../navigation/helpers';
 
-const { StorageHelper, AnalyticsHelper, PerformanceHelper } = helpers;
+const { StorageHelper, PerformanceHelper } = helpers;
 
 import {
   STORAGE_KEYS,
@@ -77,11 +77,6 @@ const Login = ({ navigation }) => {
     loadSavedCredentials();
   }, []);
 
-  // Track screen view for analytics
-  useEffect(() => {
-    AnalyticsHelper.trackScreenView('Login');
-  }, []);
-
   // Validate email format
   const validateEmail = useCallback(email => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,9 +84,9 @@ const Login = ({ navigation }) => {
   }, []);
 
   // Debounced error clearing
-  const clearErrorMessage = useCallback(
-    PerformanceHelper.debounce(() => setErrorMessage(''), 5000),
-    [],
+  const clearErrorMessage = PerformanceHelper.debounce(
+    () => setErrorMessage(''),
+    5000,
   );
 
   // Handle form validation
@@ -129,7 +124,6 @@ const Login = ({ navigation }) => {
 
     try {
       // Track login attempt
-      AnalyticsHelper.trackEvent('login_attempt', { email });
 
       // Call login API
       const response = await handleUserLogin({ email, password });
@@ -183,24 +177,12 @@ const Login = ({ navigation }) => {
 
       await setCredentials(credentialsToSet);
 
-      // Track successful login
-      AnalyticsHelper.trackEvent('login_success', {
-        email,
-        loginMethod: 'email_password',
-      });
-
       // Optional: Show success message briefly
       setErrorMessage('');
 
       // Navigation will be handled automatically by RootStack
     } catch (error) {
       console.error('Login Error:', error);
-
-      // Track login failure
-      AnalyticsHelper.trackEvent('login_failure', {
-        email,
-        error: error.message,
-      });
 
       // Handle different error types
       let errorMsg = ERROR_MESSAGES.INVALID_CREDENTIALS;
@@ -241,13 +223,11 @@ const Login = ({ navigation }) => {
 
   // Handle navigation to SignUp
   const handleSignUpNavigation = useCallback(() => {
-    AnalyticsHelper.trackEvent('signup_link_clicked');
     navigation.navigate('SignUp');
   }, [navigation]);
 
   // Handle forgot password (if you have this feature)
   const handleForgotPassword = useCallback(() => {
-    AnalyticsHelper.trackEvent('forgot_password_clicked');
     // Navigate to forgot password screen or show modal
     Alert.alert(
       'Forgot Password',
@@ -332,6 +312,7 @@ const Login = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -368,6 +349,7 @@ const Login = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -575,10 +557,12 @@ const styles = StyleSheet.create({
   snackbar: {
     borderRadius: 8,
     margin: 16,
+    fontFamily: 'Metropolis-Medium',
   },
   snackbarText: {
     color: 'white',
     fontSize: 14,
+    fontFamily: 'Metropolis-Medium',
   },
 });
 

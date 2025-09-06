@@ -2,19 +2,9 @@
 import { CommonActions, StackActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { STORAGE_KEYS, ERROR_MESSAGES } from './constants';
-
-// Safe NetInfo import with fallback
-let NetInfo;
-try {
-  NetInfo = require('@react-native-community/netinfo').default;
-} catch (error) {
-  console.warn('NetInfo not available, using mock');
-  NetInfo = {
-    fetch: () => Promise.resolve({ isConnected: true, type: 'wifi' }),
-    addEventListener: () => () => {},
-  };
-}
+import { getOwnerDetails } from '../services/NetworkUtils';
 
 /**
  * Navigation helper functions for consistent navigation throughout the app
@@ -150,8 +140,13 @@ export class AuthHelper {
         return { isValid: false, userData: null, error: 'NO_TOKEN' };
       }
 
+      const user_details = await getOwnerDetails(token);
+      if (!user_details) {
+        return { isValid: false, userData: null, error: 'INVALID_TOKEN' };
+      }
+
       // Simple validation - replace with actual API call in production
-      return { isValid: true, userData: { token }, error: null };
+      return { isValid: true, userData: user_details, error: null };
     } catch (error) {
       console.error('Token validation error:', error);
       return { isValid: false, userData: null, error: 'VALIDATION_ERROR' };
@@ -333,13 +328,6 @@ export class ErrorHelper {
         message: error.message,
         stack: error.stack,
         name: error.name,
-        // Add axios-specific error details
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.response?.data,
-        isNetworkError: !error.response,
       },
       context,
       userId,
@@ -352,15 +340,7 @@ export class ErrorHelper {
     }
 
     if (__DEV__) {
-      console.error('Error logged:', {
-        context,
-        message: error.message,
-        status: error.response?.status,
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.response?.data,
-        isNetworkError: !error.response,
-      });
+      console.error('Error logged:', errorEntry);
     }
   }
 
@@ -518,16 +498,3 @@ export default {
   PerformanceHelper,
   AnalyticsHelper,
 };
-
-// Debug log for development
-if (__DEV__) {
-  console.log('Helpers exported:', {
-    NavigationHelper: !!NavigationHelper,
-    AuthHelper: !!AuthHelper,
-    StorageHelper: !!StorageHelper,
-    NetworkHelper: !!NetworkHelper,
-    ErrorHelper: !!ErrorHelper,
-    PerformanceHelper: !!PerformanceHelper,
-    AnalyticsHelper: !!AnalyticsHelper,
-  });
-}
