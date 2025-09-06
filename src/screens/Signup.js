@@ -301,6 +301,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -328,6 +329,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -359,6 +361,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -385,6 +388,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -411,6 +415,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -463,6 +468,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -489,6 +495,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -515,6 +522,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -550,6 +558,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
@@ -586,6 +595,7 @@ const SignUp = ({ navigation }) => {
                 fonts: {
                   regular: 'Metropolis-Regular',
                   medium: 'Metropolis-Medium',
+                  labelLarge: 'Metropolis-Regular',
                 },
               }}
               style={styles.input}
