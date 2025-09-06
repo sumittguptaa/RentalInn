@@ -258,7 +258,11 @@ const Home = ({ navigation }) => {
             </StandardText>
           </View>
 
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('Notices');
+            }}
+          >
             <View>
               <Avatar.Icon
                 size={40}
