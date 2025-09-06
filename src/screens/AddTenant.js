@@ -1,13 +1,5 @@
 import React, { useContext, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { TextInput as PaperInput, useTheme } from 'react-native-paper';
 import { ThemeContext } from '../context/ThemeContext';
 import Gap from '../components/Gap/Gap';
@@ -125,10 +117,7 @@ const AddTenant = ({ navigation }) => {
       return;
     }
 
-    Alert.alert('Add Tenant', 'Are you sure you want to add this tenant?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Add', onPress: submitTenant },
-    ]);
+    submitTenant();
   };
 
   const submitTenant = async () => {
@@ -136,9 +125,7 @@ const AddTenant = ({ navigation }) => {
     setErrorMsg('');
     try {
       await addTenant(credentials.accessToken, credentials.property_id, tenant);
-      Alert.alert('Success', 'Tenant added successfully! 🎉', [
-        { text: 'OK', onPress: () => navigation.goBack({ refresh: true }) },
-      ]);
+      navigation.goBack({ refresh: true });
     } catch (error) {
       setErrorMsg(
         error?.message ||
@@ -161,345 +148,321 @@ const AddTenant = ({ navigation }) => {
     return theme.colors.onSurfaceVariant;
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.surface,
+    },
+    scrollContainer: {
+      padding: 16,
+      backgroundColor: theme.colors.surface,
+    },
+
+    headerContainer: {
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+    },
+    gradientTitle: {
+      paddingHorizontal: 32,
+      paddingVertical: 16,
+      borderRadius: 25,
+      alignItems: 'center',
+    },
+    formSection: {
+      marginBottom: 16,
+    },
+    sectionTitle: {
+      marginBottom: 12,
+      color: '#007AFF',
+    },
+    formRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginBottom: 8,
+    },
+    formColumn: {
+      flex: 1,
+    },
+    fieldLabel: {
+      marginBottom: 8,
+      color: '#424242',
+    },
+    chipContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginVertical: 8,
+    },
+    errorText: {
+      color: '#D32F2F',
+      marginTop: 4,
+      fontSize: 12,
+    },
+    statusContainer: {
+      padding: 16,
+      borderRadius: 12,
+      marginBottom: 16,
+      alignItems: 'center',
+    },
+    statusText: {
+      textAlign: 'center',
+    },
+    submitContainer: {
+      marginTop: 24,
+      gap: 12,
+    },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={[theme.colors.primary, theme.colors.secondary]}
+          style={styles.gradientTitle}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
         >
-          {/* Header */}
-          <View style={styles.headerContainer}>
-            <LinearGradient
-              colors={[theme.colors.primary, theme.colors.secondary]}
-              style={styles.gradientTitle}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <StandardText
-                size="xl"
-                fontWeight="bold"
-                style={{ color: theme.colors.onPrimary }}
-              >
-                👤 Add New Tenant
-              </StandardText>
-            </LinearGradient>
-          </View>
-
-          <GradientCard
-            gradient={true}
-            gradientColors={[
-              mode === 'dark' ? '#2a2a2a' : '#ffffff',
-              mode === 'dark' ? '#1f1f1f' : '#f8f9fa',
-            ]}
+          <StandardText
+            size="xl"
+            fontWeight="bold"
+            style={{ color: theme.colors.onPrimary }}
           >
-            {/* Personal Information Section */}
-            <View style={styles.formSection}>
-              <StandardText
-                size="lg"
-                fontWeight="600"
-                style={styles.sectionTitle}
-              >
-                📋 Personal Information
-              </StandardText>
+            👤 Add New Tenant
+          </StandardText>
+        </LinearGradient>
+      </View>
 
+      <GradientCard
+        gradient={true}
+        gradientColors={[
+          mode === 'dark' ? '#2a2a2a' : '#ffffff',
+          mode === 'dark' ? '#1f1f1f' : '#f8f9fa',
+        ]}
+      >
+        {/* Personal Information Section */}
+        <View style={styles.formSection}>
+          <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+            📋 Personal Information
+          </StandardText>
+
+          <StyledTextInput
+            label="Full Name *"
+            value={tenant.name}
+            onChangeText={text => handleChange('name', text)}
+            placeholder="Enter tenant's full name"
+            left={<PaperInput.Icon icon="account" />}
+            error={formErrors.name}
+          />
+
+          <View style={styles.formRow}>
+            <View style={styles.formColumn}>
               <StyledTextInput
-                label="Full Name *"
-                value={tenant.name}
-                onChangeText={text => handleChange('name', text)}
-                placeholder="Enter tenant's full name"
-                left={<PaperInput.Icon icon="account" />}
-                error={formErrors.name}
-              />
-
-              <View style={styles.formRow}>
-                <View style={styles.formColumn}>
-                  <StyledTextInput
-                    label="Phone Number *"
-                    value={tenant.phone}
-                    onChangeText={text => handleChange('phone', text)}
-                    placeholder="Primary phone number"
-                    keyboardType="phone-pad"
-                    maxLength={10}
-                    left={<PaperInput.Icon icon="phone" />}
-                    error={formErrors.phone}
-                  />
-                </View>
-
-                <View style={styles.formColumn}>
-                  <StyledTextInput
-                    label="Alternate Phone"
-                    value={tenant.alternatePhone}
-                    onChangeText={text => handleChange('alternatePhone', text)}
-                    placeholder="Alternate number"
-                    keyboardType="phone-pad"
-                    maxLength={10}
-                    left={<PaperInput.Icon icon="phone-plus" />}
-                  />
-                </View>
-              </View>
-
-              <StyledTextInput
-                label="Email Address *"
-                value={tenant.email}
-                onChangeText={text => handleChange('email', text)}
-                placeholder="Tenant's email address"
-                keyboardType="email-address"
-                left={<PaperInput.Icon icon="email" />}
-                error={formErrors.email}
+                label="Phone Number *"
+                value={tenant.phone}
+                onChangeText={text => handleChange('phone', text)}
+                placeholder="Primary phone number"
+                keyboardType="phone-pad"
+                maxLength={10}
+                left={<PaperInput.Icon icon="phone" />}
+                error={formErrors.phone}
               />
             </View>
 
-            {/* Room & Agreement Section */}
-            <View style={styles.formSection}>
-              <StandardText
-                size="lg"
-                fontWeight="600"
-                style={styles.sectionTitle}
-              >
-                🏠 Room & Agreement Details
-              </StandardText>
-
+            <View style={styles.formColumn}>
               <StyledTextInput
-                label="Room ID *"
-                value={tenant.roomId}
-                onChangeText={text => handleChange('roomId', text)}
-                placeholder="Room ID or number"
-                left={<PaperInput.Icon icon="door" />}
-                error={formErrors.roomId}
+                label="Alternate Phone"
+                value={tenant.alternatePhone}
+                onChangeText={text => handleChange('alternatePhone', text)}
+                placeholder="Alternate number"
+                keyboardType="phone-pad"
+                maxLength={10}
+                left={<PaperInput.Icon icon="phone-plus" />}
               />
+            </View>
+          </View>
 
-              <View style={styles.formRow}>
-                <View style={styles.formColumn}>
-                  <TouchableOpacity
-                    onPress={() => openDatePicker('checkInDate')}
-                  >
-                    <StyledTextInput
-                      label="Check-in Date *"
-                      value={tenant.checkInDate}
-                      placeholder="Select check-in date"
-                      left={<PaperInput.Icon icon="calendar-import" />}
-                      error={formErrors.checkInDate}
-                      editable={false}
-                      pointerEvents="none"
-                    />
-                  </TouchableOpacity>
-                </View>
+          <StyledTextInput
+            label="Email Address *"
+            value={tenant.email}
+            onChangeText={text => handleChange('email', text)}
+            placeholder="Tenant's email address"
+            keyboardType="email-address"
+            left={<PaperInput.Icon icon="email" />}
+            error={formErrors.email}
+          />
+        </View>
 
-                <View style={styles.formColumn}>
-                  <TouchableOpacity
-                    onPress={() => openDatePicker('checkOutDate')}
-                  >
-                    <StyledTextInput
-                      label="Check-out Date *"
-                      value={tenant.checkOutDate}
-                      placeholder="Select check-out date"
-                      left={<PaperInput.Icon icon="calendar-export" />}
-                      error={formErrors.checkOutDate}
-                      editable={false}
-                      pointerEvents="none"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
+        {/* Room & Agreement Section */}
+        <View style={styles.formSection}>
+          <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+            🏠 Room & Agreement Details
+          </StandardText>
 
-              <View style={styles.formRow}>
-                <View style={styles.formColumn}>
-                  <StyledTextInput
-                    label="Lock-in Period (months) *"
-                    value={tenant.lockInPeriod}
-                    onChangeText={text => handleChange('lockInPeriod', text)}
-                    placeholder="e.g. 6"
-                    keyboardType="numeric"
-                    left={<PaperInput.Icon icon="lock" />}
-                    error={formErrors.lockInPeriod}
-                  />
-                </View>
+          <StyledTextInput
+            label="Room ID *"
+            value={tenant.roomId}
+            onChangeText={text => handleChange('roomId', text)}
+            placeholder="Room ID or number"
+            left={<PaperInput.Icon icon="door" />}
+            error={formErrors.roomId}
+          />
 
-                <View style={styles.formColumn}>
-                  <StyledTextInput
-                    label="Agreement Period (months) *"
-                    value={tenant.agreementPeriod}
-                    onChangeText={text => handleChange('agreementPeriod', text)}
-                    placeholder="e.g. 12"
-                    keyboardType="numeric"
-                    left={<PaperInput.Icon icon="file-document" />}
-                    error={formErrors.agreementPeriod}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.formSection}>
-                <StandardText
-                  size="sm"
-                  fontWeight="600"
-                  style={styles.fieldLabel}
-                >
-                  Tenant Type *
-                </StandardText>
-                <View style={styles.chipContainer}>
-                  <AnimatedChip
-                    label="Family"
-                    selected={tenant.tenantType === 'family'}
-                    onPress={() => handleChange('tenantType', 'family')}
-                    size="medium"
-                    icon="home-heart"
-                  />
-                  <AnimatedChip
-                    label="Bachelors"
-                    selected={tenant.tenantType === 'bachelors'}
-                    onPress={() => handleChange('tenantType', 'bachelors')}
-                    size="medium"
-                    icon="account-group"
-                  />
-                </View>
-                {formErrors.tenantType && (
-                  <StandardText size="xs" style={styles.errorText}>
-                    {formErrors.tenantType}
-                  </StandardText>
-                )}
-              </View>
-
-              <TouchableOpacity onPress={() => openDatePicker('addRentOn')}>
+          <View style={styles.formRow}>
+            <View style={styles.formColumn}>
+              <TouchableOpacity onPress={() => openDatePicker('checkInDate')}>
                 <StyledTextInput
-                  label="Rent Start Date *"
-                  value={tenant.addRentOn}
-                  placeholder="Select rent start date"
-                  left={<PaperInput.Icon icon="currency-inr" />}
-                  error={formErrors.addRentOn}
+                  label="Check-in Date *"
+                  value={tenant.checkInDate}
+                  placeholder="Select check-in date"
+                  left={<PaperInput.Icon icon="calendar-import" />}
+                  error={formErrors.checkInDate}
                   editable={false}
                   pointerEvents="none"
                 />
               </TouchableOpacity>
             </View>
 
-            {/* Status Messages */}
-            {errorMsg && (
-              <View
-                style={[
-                  styles.statusContainer,
-                  { backgroundColor: getStatusColor() },
-                ]}
-              >
-                <StandardText
-                  size="md"
-                  fontWeight="600"
-                  style={[styles.statusText, { color: getStatusTextColor() }]}
-                >
-                  ❌ {errorMsg}
-                </StandardText>
-              </View>
-            )}
+            <View style={styles.formColumn}>
+              <TouchableOpacity onPress={() => openDatePicker('checkOutDate')}>
+                <StyledTextInput
+                  label="Check-out Date *"
+                  value={tenant.checkOutDate}
+                  placeholder="Select check-out date"
+                  left={<PaperInput.Icon icon="calendar-export" />}
+                  error={formErrors.checkOutDate}
+                  editable={false}
+                  pointerEvents="none"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-            {/* Submit Buttons */}
-            <View style={styles.submitContainer}>
-              <StyledButton
-                title={loading ? 'Adding Tenant...' : 'Add Tenant'}
-                icon={loading ? 'loading' : 'account-plus'}
-                variant="primary"
-                size="large"
-                onPress={handleSubmit}
-                disabled={loading}
-                loading={loading}
-                fullWidth={true}
-              />
-
-              <StyledButton
-                title="Cancel"
-                icon="close"
-                variant="outlined"
-                size="medium"
-                onPress={() => navigation.goBack()}
-                disabled={loading}
-                fullWidth={true}
+          <View style={styles.formRow}>
+            <View style={styles.formColumn}>
+              <StyledTextInput
+                label="Lock-in Period (months) *"
+                value={tenant.lockInPeriod}
+                onChangeText={text => handleChange('lockInPeriod', text)}
+                placeholder="e.g. 6"
+                keyboardType="numeric"
+                left={<PaperInput.Icon icon="lock" />}
+                error={formErrors.lockInPeriod}
               />
             </View>
-          </GradientCard>
 
-          {/* Date Picker */}
-          {datePicker.show && (
-            <DateTimePicker
-              value={datePicker.value}
-              mode="date"
-              display="default"
-              onChange={onDateChange}
+            <View style={styles.formColumn}>
+              <StyledTextInput
+                label="Agreement Period (months) *"
+                value={tenant.agreementPeriod}
+                onChangeText={text => handleChange('agreementPeriod', text)}
+                placeholder="e.g. 12"
+                keyboardType="numeric"
+                left={<PaperInput.Icon icon="file-document" />}
+                error={formErrors.agreementPeriod}
+              />
+            </View>
+          </View>
+
+          <View style={styles.formSection}>
+            <StandardText size="sm" fontWeight="600" style={styles.fieldLabel}>
+              Tenant Type *
+            </StandardText>
+            <View style={styles.chipContainer}>
+              <AnimatedChip
+                label="Family"
+                selected={tenant.tenantType === 'family'}
+                onPress={() => handleChange('tenantType', 'family')}
+                size="medium"
+                icon="home-heart"
+              />
+              <AnimatedChip
+                label="Bachelors"
+                selected={tenant.tenantType === 'bachelors'}
+                onPress={() => handleChange('tenantType', 'bachelors')}
+                size="medium"
+                icon="account-group"
+              />
+            </View>
+            {formErrors.tenantType && (
+              <StandardText size="xs" style={styles.errorText}>
+                {formErrors.tenantType}
+              </StandardText>
+            )}
+          </View>
+
+          <TouchableOpacity onPress={() => openDatePicker('addRentOn')}>
+            <StyledTextInput
+              label="Rent Start Date *"
+              value={tenant.addRentOn}
+              placeholder="Select rent start date"
+              left={<PaperInput.Icon icon="currency-inr" />}
+              error={formErrors.addRentOn}
+              editable={false}
+              pointerEvents="none"
             />
-          )}
+          </TouchableOpacity>
+        </View>
 
-          <Gap size="lg" />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {/* Status Messages */}
+        {errorMsg && (
+          <View
+            style={[
+              styles.statusContainer,
+              { backgroundColor: getStatusColor() },
+            ]}
+          >
+            <StandardText
+              size="md"
+              fontWeight="600"
+              style={[styles.statusText, { color: getStatusTextColor() }]}
+            >
+              ❌ {errorMsg}
+            </StandardText>
+          </View>
+        )}
+
+        {/* Submit Buttons */}
+        <View style={styles.submitContainer}>
+          <StyledButton
+            title={loading ? 'Adding Tenant...' : 'Add Tenant'}
+            icon={loading ? 'loading' : 'account-plus'}
+            variant="primary"
+            size="large"
+            onPress={handleSubmit}
+            disabled={loading}
+            loading={loading}
+            fullWidth={true}
+          />
+
+          <StyledButton
+            title="Cancel"
+            icon="close"
+            variant="outlined"
+            size="medium"
+            onPress={() => navigation.goBack()}
+            disabled={loading}
+            fullWidth={true}
+          />
+        </View>
+      </GradientCard>
+
+      {/* Date Picker */}
+      {datePicker.show && (
+        <DateTimePicker
+          value={datePicker.value}
+          mode="date"
+          display="default"
+          onChange={onDateChange}
+        />
+      )}
+
+      <Gap size="lg" />
+    </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  scrollContainer: {
-    padding: 20,
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  gradientTitle: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 25,
-    alignItems: 'center',
-  },
-  formSection: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    color: '#007AFF',
-  },
-  formRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 8,
-  },
-  formColumn: {
-    flex: 1,
-  },
-  fieldLabel: {
-    marginBottom: 8,
-    color: '#424242',
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginVertical: 8,
-  },
-  errorText: {
-    color: '#D32F2F',
-    marginTop: 4,
-    fontSize: 12,
-  },
-  statusContainer: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  statusText: {
-    textAlign: 'center',
-  },
-  submitContainer: {
-    marginTop: 24,
-    gap: 12,
-  },
-});
 
 export default AddTenant;

@@ -19,14 +19,7 @@ const GradientCard = ({
   ];
 
   const cardStyle = {
-    borderRadius: 16,
-    padding: 20,
-    marginVertical: 8,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    padding: 16,
     backgroundColor: theme.colors.surface,
   };
 

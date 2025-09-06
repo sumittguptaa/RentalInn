@@ -5,7 +5,6 @@ import {
   View,
   Image,
   Dimensions,
-  Alert,
   TouchableOpacity,
 } from 'react-native';
 import { TextInput, useTheme } from 'react-native-paper';
@@ -248,19 +247,9 @@ const AddRoom = ({ navigation }) => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors and try again.');
       return;
     }
-
-    const action = isEdit ? 'update' : 'create';
-    Alert.alert(
-      `${isEdit ? 'Update' : 'Create'} Room`,
-      `Are you sure you want to ${action} this room?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: isEdit ? 'Update' : 'Create', onPress: submitRoom },
-      ],
-    );
+    submitRoom();
   };
 
   const submitRoom = async () => {
@@ -294,20 +283,14 @@ const AddRoom = ({ navigation }) => {
 
       if (isEdit) {
         await updateRoom(credentials.accessToken, editRoom.id, payload);
-        Alert.alert('Success', 'Room updated successfully! 🎉');
       } else {
         await createRoom(credentials.accessToken, payload);
-        Alert.alert('Success', 'Room created successfully! 🎉');
       }
 
       resetForm();
       navigation.goBack();
     } catch (error) {
       console.error('Room submission error:', error);
-      Alert.alert(
-        'Error',
-        `Failed to ${isEdit ? 'update' : 'create'} room. Please try again.`,
-      );
     } finally {
       setLoading(false);
     }
@@ -337,11 +320,11 @@ const AddRoom = ({ navigation }) => {
       flex: 1,
       paddingHorizontal: 20,
       paddingTop: 10,
+      backgroundColor: theme.colors.surface,
     },
     headerContainer: {
       position: 'relative',
       alignItems: 'center',
-      marginBottom: 24,
     },
     closeButton: {
       position: 'absolute',
@@ -353,7 +336,6 @@ const AddRoom = ({ navigation }) => {
     },
     titleContainer: {
       alignItems: 'center',
-      paddingVertical: 16,
     },
     gradientTitle: {
       paddingHorizontal: 24,
@@ -742,7 +724,7 @@ const AddRoom = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
-        <StyledButton
+        {/* <StyledButton
           title={roomImages.length > 0 ? 'Add More Images' : 'Upload Images'}
           icon="camera-plus"
           variant="outlined"
@@ -750,7 +732,7 @@ const AddRoom = ({ navigation }) => {
           onPress={pickImages}
           fullWidth={true}
           disabled={roomImages.length >= 5}
-        />
+        /> */}
 
         {/* Submit Buttons */}
         <View style={styles.submitContainer}>

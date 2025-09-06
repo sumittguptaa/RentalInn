@@ -6,14 +6,8 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
-import {
-  TextInput as PaperInput,
-  useTheme,
-  Text,
-  IconButton,
-} from 'react-native-paper';
+import { TextInput as PaperInput, useTheme } from 'react-native-paper';
 import { CredentialsContext } from '../context/CredentialsContext';
 import {
   createDocument,
@@ -27,10 +21,12 @@ import StyledTextInput from '../components/StyledTextInput/StyledTextInput';
 import Gap from '../components/Gap/Gap';
 import * as ImagePicker from 'react-native-image-picker';
 import LinearGradient from 'react-native-linear-gradient';
+import { ThemeContext } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const AddTicket = ({ navigation }) => {
+  const { theme: mode } = useContext(ThemeContext);
   const theme = useTheme();
   const { credentials } = useContext(CredentialsContext);
   const [form, setForm] = useState({
@@ -72,15 +68,7 @@ const AddTicket = ({ navigation }) => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
-    Alert.alert(
-      'Create Ticket',
-      'Are you sure you want to create this ticket?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Create', onPress: submitTicket },
-      ],
-    );
+    submitTicket();
   };
 
   const submitTicket = async () => {
@@ -170,8 +158,8 @@ const AddTicket = ({ navigation }) => {
   const styles = StyleSheet.create({
     container: {
       flexGrow: 1,
-      padding: 20,
-      backgroundColor: theme.colors.background,
+      padding: 16,
+      backgroundColor: theme.colors.surface,
     },
     headerContainer: {
       alignItems: 'center',
@@ -268,7 +256,10 @@ const AddTicket = ({ navigation }) => {
 
       <GradientCard
         gradient={true}
-        gradientColors={[theme.colors.surface, theme.colors.surfaceVariant]}
+        gradientColors={[
+          mode === 'dark' ? '#2a2a2a' : '#ffffff',
+          mode === 'dark' ? '#1f1f1f' : '#f8f9fa',
+        ]}
       >
         {/* Issue Details Section */}
         <View style={styles.formSection}>
@@ -372,7 +363,7 @@ const AddTicket = ({ navigation }) => {
               </StandardText>
             </TouchableOpacity>
           )}
-
+          {/* 
           <StyledButton
             title={roomImages.length > 0 ? 'Change Images' : 'Add Images'}
             icon="camera-plus"
@@ -380,7 +371,7 @@ const AddTicket = ({ navigation }) => {
             size="medium"
             onPress={pickImages}
             fullWidth={true}
-          />
+          /> */}
         </View>
 
         {/* Status Messages */}
