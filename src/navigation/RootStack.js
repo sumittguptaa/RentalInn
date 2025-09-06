@@ -48,10 +48,10 @@ const RootStack = () => {
     headerTintColor: colors.primary,
     headerTransparent: false,
     headerLeftContainerStyle: {
-      paddingLeft: 20,
+      paddingLeft: 16,
     },
     headerRightContainerStyle: {
-      paddingRight: 20,
+      paddingRight: 16,
     },
     headerTitleStyle: {
       fontSize: 18,

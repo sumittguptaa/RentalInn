@@ -195,7 +195,8 @@ const ContactSupport = ({ navigation }) => {
       backgroundColor: theme.colors.background,
     },
     scrollContainer: {
-      padding: 20,
+      padding: 16,
+      backgroundColor: theme.colors.surface,
     },
     headerContainer: {
       alignItems: 'center',
@@ -288,6 +289,7 @@ const ContactSupport = ({ navigation }) => {
     },
     submitButton: {
       marginTop: 16,
+      color: theme.colors.onPrimary,
     },
     supportInfoCard: {
       marginBottom: 24,
@@ -328,272 +330,264 @@ const ContactSupport = ({ navigation }) => {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <LinearGradient
-            colors={[theme.colors.primary, theme.colors.secondary]}
-            style={styles.gradientTitle}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <LinearGradient
+          colors={[theme.colors.primary, theme.colors.secondary]}
+          style={styles.gradientTitle}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <StandardText
+            size="xl"
+            fontWeight="bold"
+            style={{ color: theme.colors.onPrimary }}
           >
-            <StandardText
-              size="xl"
-              fontWeight="bold"
-              style={{ color: theme.colors.onPrimary }}
-            >
-              🆘 Contact Support
-            </StandardText>
-          </LinearGradient>
-        </View>
-
-        {/* Support Info */}
-        <Card style={styles.supportInfoCard}>
-          <StandardText style={styles.supportInfoText}>
-            Our support team is here to help you 24/7. Choose from multiple ways
-            to get assistance or fill out the form below for detailed support.
+            🆘 Contact Support
           </StandardText>
-          <View style={styles.responseTimeContainer}>
-            <View style={styles.responseTimeItem}>
-              <StandardText
-                size="lg"
-                fontWeight="bold"
-                style={styles.responseTimeNumber}
-              >
-                &lt; 1hr
-              </StandardText>
-              <StandardText size="sm" style={styles.responseTimeLabel}>
-                Phone Support
-              </StandardText>
-            </View>
-            <View style={styles.responseTimeItem}>
-              <StandardText
-                size="lg"
-                fontWeight="bold"
-                style={styles.responseTimeNumber}
-              >
-                &lt; 24hrs
-              </StandardText>
-              <StandardText size="sm" style={styles.responseTimeLabel}>
-                Email Response
-              </StandardText>
-            </View>
-            <View style={styles.responseTimeItem}>
-              <StandardText
-                size="lg"
-                fontWeight="bold"
-                style={styles.responseTimeNumber}
-              >
-                99.9%
-              </StandardText>
-              <StandardText size="sm" style={styles.responseTimeLabel}>
-                Satisfaction Rate
-              </StandardText>
-            </View>
-          </View>
-        </Card>
+        </LinearGradient>
+      </View>
 
-        {/* Quick Actions */}
-        <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
-          Quick Contact Options
+      {/* Support Info */}
+      <Card style={styles.supportInfoCard}>
+        <StandardText style={styles.supportInfoText}>
+          Our support team is here to help you 24/7. Choose from multiple ways
+          to get assistance or fill out the form below for detailed support.
         </StandardText>
-        <View style={styles.quickActionsGrid}>
-          {quickActions.map((action, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.quickActionCard}
-              onPress={action.action}
-              activeOpacity={0.8}
+        <View style={styles.responseTimeContainer}>
+          <View style={styles.responseTimeItem}>
+            <StandardText
+              size="lg"
+              fontWeight="bold"
+              style={styles.responseTimeNumber}
             >
-              <LinearGradient
-                colors={[action.color, `${action.color}CC`]}
-                style={styles.quickActionContent}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+              &lt; 1hr
+            </StandardText>
+            <StandardText size="sm" style={styles.responseTimeLabel}>
+              Phone Support
+            </StandardText>
+          </View>
+          <View style={styles.responseTimeItem}>
+            <StandardText
+              size="lg"
+              fontWeight="bold"
+              style={styles.responseTimeNumber}
+            >
+              &lt; 24hrs
+            </StandardText>
+            <StandardText size="sm" style={styles.responseTimeLabel}>
+              Email Response
+            </StandardText>
+          </View>
+          <View style={styles.responseTimeItem}>
+            <StandardText
+              size="lg"
+              fontWeight="bold"
+              style={styles.responseTimeNumber}
+            >
+              99.9%
+            </StandardText>
+            <StandardText size="sm" style={styles.responseTimeLabel}>
+              Satisfaction Rate
+            </StandardText>
+          </View>
+        </View>
+      </Card>
+
+      {/* Quick Actions */}
+      <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+        Quick Contact Options
+      </StandardText>
+      <View style={styles.quickActionsGrid}>
+        {quickActions.map((action, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.quickActionCard}
+            onPress={action.action}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[action.color, `${action.color}CC`]}
+              style={styles.quickActionContent}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <PaperInput.Icon
+                icon={action.icon}
+                size={32}
+                color="#FFFFFF"
+                style={styles.quickActionIcon}
+              />
+              <StandardText
+                size="md"
+                fontWeight="600"
+                style={styles.quickActionTitle}
               >
-                <PaperInput.Icon
-                  icon={action.icon}
-                  size={32}
-                  color="#FFFFFF"
-                  style={styles.quickActionIcon}
-                />
-                <StandardText
-                  size="md"
-                  fontWeight="600"
-                  style={styles.quickActionTitle}
-                >
-                  {action.title}
-                </StandardText>
-                <StandardText size="sm" style={styles.quickActionSubtitle}>
-                  {action.subtitle}
-                </StandardText>
-              </LinearGradient>
-            </TouchableOpacity>
+                {action.title}
+              </StandardText>
+              <StandardText size="sm" style={styles.quickActionSubtitle}>
+                {action.subtitle}
+              </StandardText>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Support Form */}
+      <GradientCard style={styles.formSection}>
+        <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
+          Submit Support Request
+        </StandardText>
+
+        {/* Personal Information */}
+        <StyledTextInput
+          label="Full Name"
+          value={formData.name}
+          onChangeText={value => updateFormData('name', value)}
+          error={errors.name}
+          left={<PaperInput.Icon icon="account" />}
+        />
+        <Gap size="md" />
+
+        <StyledTextInput
+          label="Email Address"
+          value={formData.email}
+          onChangeText={value => updateFormData('email', value)}
+          error={errors.email}
+          keyboardType="email-address"
+          left={<PaperInput.Icon icon="email" />}
+        />
+        <Gap size="md" />
+
+        <StyledTextInput
+          label="Phone Number (Optional)"
+          value={formData.phone}
+          onChangeText={value => updateFormData('phone', value)}
+          keyboardType="phone-pad"
+          left={<PaperInput.Icon icon="phone" />}
+        />
+        <Gap size="md" />
+
+        <StyledTextInput
+          label="Subject"
+          value={formData.subject}
+          onChangeText={value => updateFormData('subject', value)}
+          error={errors.subject}
+          placeholder="Brief description of your issue"
+          left={<PaperInput.Icon icon="text-subject" />}
+        />
+        <Gap size="lg" />
+
+        {/* Category Selection */}
+        <StandardText size="md" fontWeight="600" style={styles.sectionTitle}>
+          Issue Category{' '}
+          {errors.category && (
+            <StandardText style={{ color: theme.colors.error }}>*</StandardText>
+          )}
+        </StandardText>
+        <View style={styles.categoryGrid}>
+          {categories.map((category, index) => (
+            <View key={index} style={styles.categoryChip}>
+              <AnimatedChip
+                label={category.label}
+                selected={formData.category === category.label}
+                onPress={() => updateFormData('category', category.label)}
+                icon={category.icon}
+                style={{
+                  backgroundColor:
+                    formData.category === category.label
+                      ? category.color
+                      : undefined,
+                }}
+              />
+            </View>
           ))}
         </View>
-
-        {/* Support Form */}
-        <GradientCard style={styles.formSection}>
-          <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
-            Submit Support Request
+        {errors.category && (
+          <StandardText style={styles.errorText}>
+            {errors.category}
           </StandardText>
-
-          {/* Personal Information */}
-          <StyledTextInput
-            label="Full Name"
-            value={formData.name}
-            onChangeText={value => updateFormData('name', value)}
-            error={errors.name}
-            left={<PaperInput.Icon icon="account" />}
-          />
-          <Gap size="md" />
-
-          <StyledTextInput
-            label="Email Address"
-            value={formData.email}
-            onChangeText={value => updateFormData('email', value)}
-            error={errors.email}
-            keyboardType="email-address"
-            left={<PaperInput.Icon icon="email" />}
-          />
-          <Gap size="md" />
-
-          <StyledTextInput
-            label="Phone Number (Optional)"
-            value={formData.phone}
-            onChangeText={value => updateFormData('phone', value)}
-            keyboardType="phone-pad"
-            left={<PaperInput.Icon icon="phone" />}
-          />
-          <Gap size="md" />
-
-          <StyledTextInput
-            label="Subject"
-            value={formData.subject}
-            onChangeText={value => updateFormData('subject', value)}
-            error={errors.subject}
-            placeholder="Brief description of your issue"
-            left={<PaperInput.Icon icon="text-subject" />}
-          />
-          <Gap size="lg" />
-
-          {/* Category Selection */}
-          <StandardText size="md" fontWeight="600" style={styles.sectionTitle}>
-            Issue Category{' '}
-            {errors.category && (
-              <StandardText style={{ color: theme.colors.error }}>
-                *
-              </StandardText>
-            )}
-          </StandardText>
-          <View style={styles.categoryGrid}>
-            {categories.map((category, index) => (
-              <View key={index} style={styles.categoryChip}>
-                <AnimatedChip
-                  label={category.label}
-                  selected={formData.category === category.label}
-                  onPress={() => updateFormData('category', category.label)}
-                  icon={category.icon}
-                  style={{
-                    backgroundColor:
-                      formData.category === category.label
-                        ? category.color
-                        : undefined,
-                  }}
-                />
-              </View>
-            ))}
-          </View>
-          {errors.category && (
-            <StandardText style={styles.errorText}>
-              {errors.category}
-            </StandardText>
-          )}
-
-          <Gap size="lg" />
-
-          {/* Priority Selection */}
-          <View style={styles.priorityContainer}>
-            <StandardText
-              size="md"
-              fontWeight="600"
-              style={styles.sectionTitle}
-            >
-              Priority Level
-            </StandardText>
-            <View style={styles.priorityGrid}>
-              {priorities.map((priority, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.priorityItem}
-                  onPress={() => updateFormData('priority', priority.label)}
-                >
-                  <View
-                    style={[
-                      styles.priorityCard,
-                      { backgroundColor: priority.color },
-                      formData.priority === priority.label &&
-                        styles.priorityCardSelected,
-                    ]}
-                  >
-                    <StandardText
-                      size="md"
-                      fontWeight="600"
-                      style={[styles.priorityLabel, styles.priorityWhiteText]}
-                    >
-                      {priority.label}
-                    </StandardText>
-                    <StandardText
-                      size="sm"
-                      style={[
-                        styles.priorityDescription,
-                        styles.priorityWhiteTextWithOpacity,
-                      ]}
-                    >
-                      {priority.description}
-                    </StandardText>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <Gap size="lg" />
-
-          {/* Message */}
-          <StyledTextInput
-            label="Detailed Message"
-            value={formData.message}
-            onChangeText={value => updateFormData('message', value)}
-            error={errors.message}
-            multiline
-            numberOfLines={6}
-            placeholder="Please provide detailed information about your issue, including steps to reproduce if applicable..."
-            style={styles.messageInput}
-            left={<PaperInput.Icon icon="message-text" />}
-          />
-
-          <Gap size="lg" />
-
-          {/* Submit Button */}
-          <StyledButton
-            mode="contained"
-            onPress={handleSubmit}
-            loading={isSubmitting}
-            disabled={isSubmitting}
-            style={styles.submitButton}
-          >
-            {isSubmitting ? 'Submitting Request...' : 'Submit Support Request'}
-          </StyledButton>
-        </GradientCard>
+        )}
 
         <Gap size="lg" />
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Priority Selection */}
+        <View style={styles.priorityContainer}>
+          <StandardText size="md" fontWeight="600" style={styles.sectionTitle}>
+            Priority Level
+          </StandardText>
+          <View style={styles.priorityGrid}>
+            {priorities.map((priority, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.priorityItem}
+                onPress={() => updateFormData('priority', priority.label)}
+              >
+                <View
+                  style={[
+                    styles.priorityCard,
+                    { backgroundColor: priority.color },
+                    formData.priority === priority.label &&
+                      styles.priorityCardSelected,
+                  ]}
+                >
+                  <StandardText
+                    size="md"
+                    fontWeight="600"
+                    style={[styles.priorityLabel, styles.priorityWhiteText]}
+                  >
+                    {priority.label}
+                  </StandardText>
+                  <StandardText
+                    size="sm"
+                    style={[
+                      styles.priorityDescription,
+                      styles.priorityWhiteTextWithOpacity,
+                    ]}
+                  >
+                    {priority.description}
+                  </StandardText>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <Gap size="lg" />
+
+        {/* Message */}
+        <StyledTextInput
+          label="Detailed Message"
+          value={formData.message}
+          onChangeText={value => updateFormData('message', value)}
+          error={errors.message}
+          multiline
+          numberOfLines={6}
+          placeholder="Please provide detailed information about your issue, including steps to reproduce if applicable..."
+          style={styles.messageInput}
+          left={<PaperInput.Icon icon="message-text" />}
+        />
+
+        <Gap size="lg" />
+
+        {/* Submit Button */}
+        <StyledButton
+          mode="contained"
+          onPress={handleSubmit}
+          loading={isSubmitting}
+          disabled={isSubmitting}
+          style={styles.submitButton}
+        >
+          {isSubmitting ? 'Submitting Request...' : 'Submit Support Request'}
+        </StyledButton>
+      </GradientCard>
+
+      <Gap size="lg" />
+    </ScrollView>
   );
 };
 
