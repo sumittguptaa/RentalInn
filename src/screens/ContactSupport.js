@@ -442,7 +442,6 @@ const ContactSupport = ({ navigation }) => {
         <StandardText size="lg" fontWeight="600" style={styles.sectionTitle}>
           Submit Support Request
         </StandardText>
-
         {/* Personal Information */}
         <StyledTextInput
           label="Full Name"
@@ -452,7 +451,6 @@ const ContactSupport = ({ navigation }) => {
           left={<PaperInput.Icon icon="account" />}
         />
         <Gap size="md" />
-
         <StyledTextInput
           label="Email Address"
           value={formData.email}
@@ -462,7 +460,6 @@ const ContactSupport = ({ navigation }) => {
           left={<PaperInput.Icon icon="email" />}
         />
         <Gap size="md" />
-
         <StyledTextInput
           label="Phone Number (Optional)"
           value={formData.phone}
@@ -471,7 +468,6 @@ const ContactSupport = ({ navigation }) => {
           left={<PaperInput.Icon icon="phone" />}
         />
         <Gap size="md" />
-
         <StyledTextInput
           label="Subject"
           value={formData.subject}
@@ -481,7 +477,6 @@ const ContactSupport = ({ navigation }) => {
           left={<PaperInput.Icon icon="text-subject" />}
         />
         <Gap size="lg" />
-
         {/* Category Selection */}
         <StandardText size="md" fontWeight="600" style={styles.sectionTitle}>
           Issue Category{' '}
@@ -512,9 +507,7 @@ const ContactSupport = ({ navigation }) => {
             {errors.category}
           </StandardText>
         )}
-
         <Gap size="lg" />
-
         {/* Priority Selection */}
         <View style={styles.priorityContainer}>
           <StandardText size="md" fontWeight="600" style={styles.sectionTitle}>
@@ -556,9 +549,7 @@ const ContactSupport = ({ navigation }) => {
             ))}
           </View>
         </View>
-
         <Gap size="lg" />
-
         {/* Message */}
         <StyledTextInput
           label="Detailed Message"
@@ -571,19 +562,20 @@ const ContactSupport = ({ navigation }) => {
           style={styles.messageInput}
           left={<PaperInput.Icon icon="message-text" />}
         />
-
         <Gap size="lg" />
-
-        {/* Submit Button */}
         <StyledButton
-          mode="contained"
-          onPress={handleSubmit}
+          title={
+            isSubmitting ? 'Submitting Request...' : 'Submit Support Request'
+          }
+          icon="send"
           loading={isSubmitting}
           disabled={isSubmitting}
+          mode="contained"
+          size="medium"
+          onPress={handleSubmit}
+          fullWidth={true}
           style={styles.submitButton}
-        >
-          {isSubmitting ? 'Submitting Request...' : 'Submit Support Request'}
-        </StyledButton>
+        />
       </GradientCard>
 
       <Gap size="lg" />

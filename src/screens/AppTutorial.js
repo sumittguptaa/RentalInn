@@ -483,9 +483,8 @@ const AppTutorial = ({ navigation }) => {
             onPress={prevStep}
             disabled={currentStep === 0}
             style={styles.navButton}
-          >
-            Previous
-          </StyledButton>
+            title={<StandardText>Previous</StandardText>}
+          />
 
           <View style={styles.stepNumberContainer}>
             <StandardText size="sm" style={styles.stepNumber}>
@@ -497,9 +496,8 @@ const AppTutorial = ({ navigation }) => {
             mode="contained"
             onPress={nextStep}
             style={styles.navButton}
-          >
-            {currentTutorial.action}
-          </StyledButton>
+            title={<StandardText>{currentTutorial.action}</StandardText>}
+          />
         </View>
       </View>
     </SafeAreaView>
