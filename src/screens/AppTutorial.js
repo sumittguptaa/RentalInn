@@ -6,6 +6,7 @@ import {
   Dimensions,
   TouchableOpacity,
   Animated,
+  Easing,
 } from 'react-native';
 import { useTheme, ProgressBar } from 'react-native-paper';
 import { ThemeContext } from '../context/ThemeContext';
@@ -163,21 +164,26 @@ const AppTutorial = ({ navigation }) => {
 
   const nextStep = () => {
     if (currentStep < tutorialSteps.length - 1) {
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
+      // Smooth fade out animation with easing
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start(() => {
+        // Update step after fade out completes
+        setCurrentStep(currentStep + 1);
+        // Reset scroll position immediately
+        scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+
+        // Fade in with new content
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 150,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
-        }),
-      ]).start();
-
-      setCurrentStep(currentStep + 1);
-      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+        }).start();
+      });
     } else {
       // Tutorial completed
       navigation.goBack();
@@ -186,21 +192,26 @@ const AppTutorial = ({ navigation }) => {
 
   const prevStep = () => {
     if (currentStep > 0) {
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
+      // Smooth fade out animation with easing
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start(() => {
+        // Update step after fade out completes
+        setCurrentStep(currentStep - 1);
+        // Reset scroll position immediately
+        scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+
+        // Fade in with new content
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 150,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
-        }),
-      ]).start();
-
-      setCurrentStep(currentStep - 1);
-      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+        }).start();
+      });
     }
   };
 
@@ -209,9 +220,31 @@ const AppTutorial = ({ navigation }) => {
   };
 
   const goToStep = stepIndex => {
-    if (stepIndex >= 0 && stepIndex < tutorialSteps.length) {
-      setCurrentStep(stepIndex);
-      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    if (
+      stepIndex >= 0 &&
+      stepIndex < tutorialSteps.length &&
+      stepIndex !== currentStep
+    ) {
+      // Smooth fade out animation with easing
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start(() => {
+        // Update step after fade out completes
+        setCurrentStep(stepIndex);
+        // Reset scroll position immediately
+        scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+
+        // Fade in with new content
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
+      });
     }
   };
 
@@ -228,7 +261,7 @@ const AppTutorial = ({ navigation }) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingVertical: 12, // Reduced padding
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.outline,
     },
@@ -240,7 +273,7 @@ const AppTutorial = ({ navigation }) => {
     },
     progressContainer: {
       paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingVertical: 12, // Reduced padding
     },
     progressText: {
       textAlign: 'center',
@@ -250,23 +283,30 @@ const AppTutorial = ({ navigation }) => {
     scrollContainer: {
       flex: 1,
     },
+    scrollContentContainer: {
+      flexGrow: 1,
+    },
     contentContainer: {
       padding: 20,
-      minHeight: height - 200,
+      paddingTop: 10,
+      minHeight: height - 250, // Increased to ensure content fits
     },
     imageContainer: {
       alignItems: 'center',
-      marginBottom: 32,
+      marginBottom: 24, // Reduced margin
+      paddingTop: 10, // Add padding to prevent cutting
     },
     imageText: {
-      fontSize: 80,
-      marginBottom: 16,
+      fontSize: 72, // Slightly smaller to prevent cutting
+      marginBottom: 12, // Reduced margin
+      textAlign: 'center',
     },
     gradientTitle: {
-      paddingHorizontal: 24,
-      paddingVertical: 12,
-      borderRadius: 20,
+      paddingHorizontal: 20, // Reduced padding
+      paddingVertical: 10, // Reduced padding
+      borderRadius: 16, // Slightly smaller border radius
       alignItems: 'center',
+      marginTop: 8, // Add margin to prevent overlap
     },
     titleText: {
       color: theme.colors.onPrimary,
@@ -275,8 +315,8 @@ const AppTutorial = ({ navigation }) => {
     subtitleText: {
       color: theme.colors.onSurfaceVariant,
       textAlign: 'center',
-      marginTop: 8,
-      marginBottom: 24,
+      marginTop: 6, // Reduced margin
+      marginBottom: 20, // Reduced margin
     },
     contentCard: {
       marginBottom: 24,
@@ -395,14 +435,18 @@ const AppTutorial = ({ navigation }) => {
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContentContainer}
         showsVerticalScrollIndicator={false}
+        bounces={false} // Disable bounce for smoother experience
+        overScrollMode="never" // Android: prevent overscroll
+        keyboardShouldPersistTaps="handled"
       >
         <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
           {/* Image/Icon */}
           <View style={styles.imageContainer}>
-            <StandardText style={styles.imageText}>
+            {/* <StandardText style={styles.imageText}>
               {currentTutorial.image}
-            </StandardText>
+            </StandardText> */}
             <LinearGradient
               colors={[theme.colors.primary, theme.colors.secondary]}
               style={styles.gradientTitle}

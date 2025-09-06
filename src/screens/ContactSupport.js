@@ -62,24 +62,24 @@ const ContactSupport = ({ navigation }) => {
   const quickActions = [
     {
       title: 'Call Support',
-      subtitle: '+1-800-RENTAL (24/7)',
+      subtitle: '+91-9628283375 (24/7)',
       icon: 'phone',
       color: '#4CAF50',
-      action: () => Linking.openURL('tel:+18007368251'),
+      action: () => Linking.openURL('tel:+919628283375'),
     },
-    {
-      title: 'Live Chat',
-      subtitle: 'Instant messaging support',
-      icon: 'chat',
-      color: '#2196F3',
-      action: () => {
-        Alert.alert(
-          'Live Chat',
-          'Live chat will be available soon! For now, please use the contact form below or call our support line.',
-          [{ text: 'OK' }],
-        );
-      },
-    },
+    // {
+    //   title: 'Live Chat',
+    //   subtitle: 'Instant messaging support',
+    //   icon: 'chat',
+    //   color: '#2196F3',
+    //   action: () => {
+    //     Alert.alert(
+    //       'Live Chat',
+    //       'Live chat will be available soon! For now, please use the contact form below or call our support line.',
+    //       [{ text: 'OK' }],
+    //     );
+    //   },
+    // },
     {
       title: 'Email Support',
       subtitle: 'support@rentalinn.com',
@@ -87,19 +87,19 @@ const ContactSupport = ({ navigation }) => {
       color: '#FF9800',
       action: () => Linking.openURL('mailto:support@rentalinn.com'),
     },
-    {
-      title: 'Video Call',
-      subtitle: 'Schedule a screen share',
-      icon: 'video',
-      color: '#9C27B0',
-      action: () => {
-        Alert.alert(
-          'Video Call Support',
-          'Video support sessions can be scheduled by calling our support line or submitting a request below.',
-          [{ text: 'OK' }],
-        );
-      },
-    },
+    // {
+    //   title: 'Video Call',
+    //   subtitle: 'Schedule a screen share',
+    //   icon: 'video',
+    //   color: '#9C27B0',
+    //   action: () => {
+    //     Alert.alert(
+    //       'Video Call Support',
+    //       'Video support sessions can be scheduled by calling our support line or submitting a request below.',
+    //       [{ text: 'OK' }],
+    //     );
+    //   },
+    // },
   ];
 
   const validateForm = () => {
@@ -418,7 +418,7 @@ const ContactSupport = ({ navigation }) => {
             >
               <PaperInput.Icon
                 icon={action.icon}
-                size={32}
+                size={25}
                 color="#FFFFFF"
                 style={styles.quickActionIcon}
               />
