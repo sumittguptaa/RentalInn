@@ -12,7 +12,7 @@ import { CredentialsContext } from '../context/CredentialsContext';
 import {
   createDocument,
   createTicket,
-  uploadDocument,
+  uploadToS3,
 } from '../services/NetworkUtils';
 import StandardText from '../components/StandardText/StandardText';
 import GradientCard from '../components/GradientCard/GradientCard';
@@ -95,7 +95,7 @@ const AddTicket = ({ navigation }) => {
           imagedetails,
         );
 
-        await uploadDocument(room_document_res.data.upload_url, image);
+        await uploadToS3(room_document_res.data.upload_url, image);
         imageDocumentIds.push(room_document_res.data.document_id);
       }
 

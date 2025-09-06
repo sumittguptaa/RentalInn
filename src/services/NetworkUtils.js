@@ -329,6 +329,77 @@ export const deleteTenant = async (accessToken, tenantId) => {
   );
 };
 
+/**
+ * Document Management API calls
+ */
+
+export const updateDocument = (
+  accessToken,
+  property_id,
+  documentId,
+  documentData,
+) => {
+  return handleApiResponse(
+    () =>
+      apiClient.put(`/documents/${documentId}`, documentData, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'Content-Type': 'application/json',
+          'x-property-id': property_id,
+        },
+      }),
+    'UPDATE_DOCUMENT',
+  );
+};
+
+export const deleteDocument = (accessToken, property_id, documentId) => {
+  return handleApiResponse(
+    () =>
+      apiClient.delete(`/documents/${documentId}`, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'x-property-id': property_id,
+        },
+      }),
+    'DELETE_DOCUMENT',
+  );
+};
+
+export const createDocument = async (accessToken, propertyId, documentData) => {
+  return handleApiResponse(
+    () =>
+      apiClient.post('/documents', documentData, {
+        headers: {
+          ...getAuthHeaders(accessToken),
+          'Content-Type': 'application/json',
+          'x-property-id': propertyId,
+        },
+      }),
+    'UPLOAD_DOCUMENT',
+  );
+};
+
+export const uploadToS3 = async (upload_url, file) => {
+  // Fetch the file as a blob
+  const response = await fetch(file.uri);
+  const blob = await response.blob();
+
+  // Upload to S3 using fetch
+  const uploadResponse = await fetch(upload_url, {
+    method: 'PUT',
+    body: blob,
+    headers: {
+      'Content-Type': file.type || 'image/jpeg',
+    },
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error('Failed to upload image to S3');
+  }
+
+  return uploadResponse;
+};
+
 export const getDocument = async (accessToken, propertyId, documentId) => {
   return handleApiResponse(
     () =>
@@ -392,82 +463,6 @@ export const deleteTicket = async (accessToken, ticketId) => {
   );
 };
 
-/**
- * Document Management API calls
- */
-export const uploadDocument = async (accessToken, documentData) => {
-  const formData = new FormData();
-  Object.keys(documentData).forEach(key => {
-    formData.append(key, documentData[key]);
-  });
-
-  return handleApiResponse(
-    () =>
-      apiClient.post('/documents', formData, {
-        headers: {
-          ...getAuthHeaders(accessToken),
-          'Content-Type': 'multipart/form-data',
-        },
-      }),
-    'UPLOAD_DOCUMENT',
-  );
-};
-
-export const fetchDocuments = async (accessToken, entityType, entityId) => {
-  return handleApiResponse(
-    () =>
-      apiClient.get('/documents', {
-        headers: getAuthHeaders(accessToken),
-        params: {
-          entityType,
-          entityId: entityId.toString(),
-        },
-      }),
-    'FETCH_DOCUMENTS',
-  );
-};
-
-export const deleteDocument = async (accessToken, documentId) => {
-  return handleApiResponse(
-    () =>
-      apiClient.delete(`/documents/${documentId}`, {
-        headers: getAuthHeaders(accessToken),
-      }),
-    'DELETE_DOCUMENT',
-  );
-};
-
-export const createDocument = async (accessToken, propertyId, documentData) => {
-  return handleApiResponse(
-    () =>
-      apiClient.post('/documents', documentData, {
-        headers: {
-          ...getAuthHeaders(accessToken),
-          'x-property-id': propertyId,
-        },
-      }),
-    'CREATE_DOCUMENT',
-  );
-};
-
-export const updateDocument = async (
-  accessToken,
-  propertyId,
-  documentId,
-  documentData,
-) => {
-  return handleApiResponse(
-    () =>
-      apiClient.put(`/documents/${documentId}`, documentData, {
-        headers: {
-          ...getAuthHeaders(accessToken),
-          'x-property-id': propertyId,
-        },
-      }),
-    'UPDATE_DOCUMENT',
-  );
-};
-
 export const updateTicket = async (accessToken, ticketId, ticketData) => {
   return handleApiResponse(
     () =>
@@ -476,42 +471,4 @@ export const updateTicket = async (accessToken, ticketId, ticketData) => {
       }),
     'UPDATE_TICKET',
   );
-};
-
-/**
- * File Upload Helper for S3
- */
-export const uploadToS3 = async (uploadUrl, file) => {
-  try {
-    // Fetch the file as a blob
-    const response = await fetch(file.uri);
-    const blob = await response.blob();
-
-    // Upload to S3 using fetch
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: blob,
-      headers: {
-        'Content-Type': file.type || 'image/jpeg',
-      },
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(
-        `Failed to upload file to S3: ${uploadResponse.statusText}`,
-      );
-    }
-
-    return {
-      success: true,
-      status: uploadResponse.status,
-      message: 'File uploaded successfully',
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      message: 'Failed to upload file',
-    };
-  }
 };

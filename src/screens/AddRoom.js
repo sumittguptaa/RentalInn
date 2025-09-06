@@ -21,7 +21,7 @@ import * as ImagePicker from 'react-native-image-picker';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   createDocument,
-  uploadDocument,
+  uploadToS3,
   createRoom,
   updateRoom,
 } from '../services/NetworkUtils';
@@ -235,7 +235,7 @@ const AddRoom = ({ navigation }) => {
           imageDetails,
         );
 
-        await uploadDocument(documentResponse.data.upload_url, image);
+        await uploadToS3(documentResponse.data.upload_url, image);
         imageDocumentIds.push(documentResponse.data.document_id);
       } catch (error) {
         console.error('Image upload error:', error);
@@ -277,14 +277,17 @@ const AddRoom = ({ navigation }) => {
         available: formData.available,
         lastElectricityReading: parseFloat(formData.lastElectricityReading),
         lastElectricityReadingDate: formData.lastElectricityReadingDate,
-        propertyId: credentials.property_id,
         image_document_id_list: [...existingImageIds, ...newImageIds],
       };
 
       if (isEdit) {
         await updateRoom(credentials.accessToken, editRoom.id, payload);
       } else {
-        await createRoom(credentials.accessToken, payload);
+        await createRoom(
+          credentials.accessToken,
+          credentials.property_id,
+          payload,
+        );
       }
 
       resetForm();
